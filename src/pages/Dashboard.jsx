@@ -1,9 +1,11 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useBoard } from '../context/BoardContext'
 import styles from './Dashboard.module.css'
 
-export default function Dashboard({ board }) {
-  const { user, logout, goToBoard, goToTeam, goToReports } = useAuth()
+export default function Dashboard() {
+  const { user, logout, goToBoard, goToTeam, goToReports, goToChat } = useAuth()
+  const { board } = useBoard()
 
   // Calculate stats from board data
   const totalTasks = board.columns.reduce((sum, col) => sum + col.tasks.length, 0)
@@ -148,6 +150,10 @@ export default function Dashboard({ board }) {
             <button className={styles.actionBtn} onClick={goToBoard}>
               <span className={styles.actionIcon}>➕</span>
               <span>Create Task</span>
+            </button>
+            <button className={styles.actionBtn} onClick={goToChat}>
+              <span className={styles.actionIcon}>💬</span>
+              <span>Messages</span>
             </button>
             <button className={styles.actionBtn} onClick={goToTeam}>
               <span className={styles.actionIcon}>👥</span>
