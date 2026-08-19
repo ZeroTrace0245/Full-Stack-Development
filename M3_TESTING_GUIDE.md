@@ -42,7 +42,7 @@
 ### Step 1: Login Page
 1. Open http://localhost:54995
 2. You should see the login page with:
-   - "TeamPulse" title and 📊 logo
+   - "NovaTrack" title and 📊 logo
    - Username field
    - Password field
    - "Remember me" checkbox
@@ -92,7 +92,7 @@ After login, you should see:
 2. Should see the Kanban board with:
 
 **Board Header:**
-- [ ] "TeamPulse - Sprint Board" title
+- [ ] "NovaTrack - Sprint Board" title
 - [ ] "← Back to Dashboard" button (blue outline)
 
 **Columns (3 columns):**
