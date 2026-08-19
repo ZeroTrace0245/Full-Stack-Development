@@ -1,15 +1,16 @@
-.column {
+ .column {
   background: var(--color-surface-2);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
+  padding: calc(var(--spacing-sm));
   border-left: 4px solid var(--color-accent-primary);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-normal);
-  min-height: 400px;
+  /* allow the column to size within the grid cell and let its tasks scroll */
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .column:hover {
@@ -31,7 +32,7 @@
 .column.status-doing {
   border-left-color: var(--color-status-doing-accent);
   background: linear-gradient(135deg, var(--color-surface-2), 
-    color-mix(in srgb, var(--color-status-doing) 30%, transparent));
+    color-mix(in srgb, var(--color-status-doing) 20%, transparent));
 }
 
 .column.status-doing:hover {
@@ -50,41 +51,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .header {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
   flex: 1;
 }
-
-.header::before {
-  content: "•";
-  font-size: var(--font-size-2xl);
-  line-height: 1;
-  margin-right: var(--spacing-xs);
-}
-
-.column.status-todo .header::before {
-  color: var(--color-status-todo-accent);
-}
-
-.column.status-doing .header::before {
-  color: var(--color-status-doing-accent);
-}
-
-.column.status-done .header::before {
-  color: var(--color-status-done-accent);
-}
+/* minimal headers: no decorative bullets */
 
 .addBtn {
   background: var(--color-accent-primary);
@@ -106,21 +89,22 @@
 
 .addBtn:hover {
   background: var(--color-accent-hover);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.18);
 }
 
 .addBtn:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 .tasks {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  flex: 1;
+  gap: var(--spacing-sm);
+  flex: 1 1 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 6px;
+  padding-bottom: 6px;
 }
 
 .tasks::-webkit-scrollbar {
@@ -132,19 +116,19 @@
 }
 
 .tasks::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 3px;
 }
 
 .tasks::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .emptyState {
   text-align: center;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-sm);
   margin: 0;
   font-style: italic;
 }

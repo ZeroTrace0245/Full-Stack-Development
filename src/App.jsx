@@ -1,69 +1,27 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { BoardProvider, useBoard } from './context/BoardContext'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
 import Board from './components/Board'
 import Modal from './components/Modal'
 import TaskForm from './components/TaskForm'
 import ConfirmDialog from './components/ConfirmDialog'
-import { saveBoardToStorage, loadBoardFromStorage } from './utils/boardStorage'
+import ActivityFeed from './components/ActivityFeed'
 import TeamMembers from './pages/TeamMembers'
 import Reports from './pages/Reports'
+import Chat from './pages/Chat'
 import styles from './App.module.css'
 
-// Initial board data
-const INITIAL_BOARD = {
-  id: 'board-1',
-  title: 'Sprint Board',
-  columns: [
-    {
-      id: 'col-1',
-      title: 'To Do',
-      tasks: [
-        { id: 't1', title: 'Set up project repo', assignee: 'USER 001', estimate: 1 },
-        { id: 't2', title: 'Design wireframes', assignee: 'USER 002', estimate: 3 },
-        { id: 't3', title: 'Write API documentation', assignee: 'USER 003', estimate: 2 },
-        { id: 't4', title: 'Setup CI/CD pipeline', assignee: 'USER 004', estimate: 4 },
-        { id: 't5', title: 'Database schema design', assignee: 'USER 005', estimate: 5 }
-      ]
-    },
-    {
-      id: 'col-2',
-      title: 'Doing',
-      tasks: [
-        { id: 't6', title: 'Implement auth module', assignee: 'USER 006', estimate: 5 },
-        { id: 't7', title: 'Create dashboard UI', assignee: 'USER 007', estimate: 4 },
-        { id: 't8', title: 'Backend API setup', assignee: 'USER 008', estimate: 6 },
-        { id: 't9', title: 'User profile page', assignee: 'USER 009', estimate: 3 }
-      ]
-    },
-    {
-      id: 'col-3',
-      title: 'Done',
-      tasks: [
-        { id: 't10', title: 'Project kickoff', assignee: 'USER 010', estimate: 1 },
-        { id: 't11', title: 'Requirements gathering', assignee: 'USER 011', estimate: 2 },
-        { id: 't12', title: 'Architecture review', assignee: 'USER 012', estimate: 3 }
-      ]
-    }
-  ]
-}
-
 function AppContent() {
-  const { isLoggedIn, currentPage, goToDashboard } = useAuth()
-  const [board, setBoard] = useState(() => {
-    const savedBoard = loadBoardFromStorage()
-    return savedBoard || INITIAL_BOARD
-  })
+  const { isLoggedIn, currentPage, goToDashboard, user } = useAuth()
+  const { board, handleCreateTask, handleEditTask, handleDeleteTask } = useBoard()
+  const [showActivity, setShowActivity] = useState(false)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedColumn, setSelectedColumn] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
-
-  // Save board to localStorage whenever it changes
-  useEffect(() => {
-    saveBoardToStorage(board)
-  }, [board])
 
   const handleCreateTaskClick = (column) => {
     setEditingTask(null)
@@ -83,120 +41,76 @@ function AppContent() {
 
   const handleConfirmDelete = () => {
     if (!deleteConfirm) return
-
-    setBoard(prevBoard => ({
-      ...prevBoard,
-      columns: prevBoard.columns.map(col => ({
-        ...col,
-        tasks: col.tasks.filter(t => t.id !== deleteConfirm.taskId)
-      }))
-    }))
+    handleDeleteTask(deleteConfirm.taskId, deleteConfirm.taskTitle)
     setDeleteConfirm(null)
   }
 
-  const handleCreateTask = (newTask) => {
+  const onSubmitTask = (taskData) => {
     if (editingTask) {
-      // Edit mode: update existing task in all columns
-      setBoard(prevBoard => ({
-        ...prevBoard,
-        columns: prevBoard.columns.map(col => ({
-          ...col,
-          tasks: col.tasks.map(t =>
-            t.id === editingTask.id
-              ? {
-                  id: t.id,  // Keep original ID
-                  title: newTask.title,
-                  assignee: newTask.assignee,
-                  estimate: newTask.estimate,
-                  columnId: t.columnId  // Keep original column
-                }
-              : t
-          )
-        }))
-      }))
+      handleEditTask({ ...taskData, id: editingTask.id })
     } else {
-      // Create mode: add new task
-      setBoard(prevBoard => ({
-        ...prevBoard,
-        columns: prevBoard.columns.map(col =>
-          col.id === newTask.columnId
-            ? { ...col, tasks: [...col.tasks, newTask] }
-            : col
-        )
-      }))
+      handleCreateTask({ ...taskData, id: 't' + Date.now() })
     }
     setIsModalOpen(false)
     setEditingTask(null)
     setSelectedColumn(null)
   }
 
-  const handleMoveTask = (taskId, sourceColumnId, destColumnId, destIndex) => {
-    setBoard(prevBoard => {
-      const newColumns = prevBoard.columns.map(col => ({
-        ...col,
-        tasks: col.tasks.filter(t => t.id !== taskId)
-      }))
-
-      const sourceCol = newColumns.find(c => c.id === sourceColumnId)
-      const task = sourceCol.tasks.find(t => t.id === taskId)
-
-      if (!task) {
-        return prevBoard
-      }
-
-      const destCol = newColumns.find(c => c.id === destColumnId)
-      const destTasks = [...destCol.tasks]
-      destTasks.splice(destIndex, 0, task)
-
-      return {
-        ...prevBoard,
-        columns: newColumns.map(col =>
-          col.id === destColumnId ? { ...col, tasks: destTasks } : col
-        )
-      }
-    })
-  }
-
-  // Show login page if not logged in
   if (!isLoggedIn) {
     return <LoginPage />
   }
 
-  // Show dashboard, team, reports or board based on current page
   if (currentPage === 'dashboard') {
-    return <Dashboard board={board} />
+    return <Dashboard />
   }
 
   if (currentPage === 'team') {
     return <TeamMembers />
   }
 
-  if (currentPage === 'reports') {
-    return <Reports board={board} />
+  if (currentPage === 'chat') {
+    return <Chat />
   }
 
-  // Show kanban board
+  if (currentPage === 'reports') {
+    if (user?.role !== 'Admin') {
+      return (
+        <div className={styles.app} style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>Access Denied</h2>
+          <p>This section is reserved for Administrators only.</p>
+          <button onClick={goToDashboard} className={styles.button}>Return to Dashboard</button>
+        </div>
+      )
+    }
+    return <Reports />
+  }
+
   return (
     <div className={styles.app}>
       <header className={styles.header}>
         <div className={styles.headerContent}>
           <h1>TeamPulse - Sprint Board</h1>
-          <button
-            className={styles.backBtn}
-            onClick={goToDashboard}
-          >
-            ← Back to Dashboard
-          </button>
+          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+            <button className={styles.activityToggle} onClick={() => setShowActivity(s => !s)} aria-pressed={showActivity}>
+              Activity
+            </button>
+            <button className={styles.backBtn} onClick={goToDashboard}>
+              ← Back to Dashboard
+            </button>
+          </div>
         </div>
       </header>
       <main className={styles.main}>
         <Board
-          board={board}
           onCreateTask={handleCreateTaskClick}
-          onMoveTask={handleMoveTask}
           onDeleteTask={handleDeleteTaskClick}
           onEditTask={handleEditTaskClick}
         />
+        {showActivity && (
+          <aside className={styles.sidebar}>
+            <ActivityFeed />
+          </aside>
+        )}
       </main>
 
       <Modal
@@ -211,7 +125,7 @@ function AppContent() {
         <TaskForm
           columns={board.columns}
           selectedColumn={selectedColumn}
-          onSubmit={handleCreateTask}
+          onSubmit={onSubmitTask}
           onCancel={() => {
             setIsModalOpen(false)
             setEditingTask(null)
@@ -238,7 +152,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <BoardProvider>
+        <AppContent />
+      </BoardProvider>
     </AuthProvider>
   )
 }

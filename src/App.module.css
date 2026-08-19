@@ -5,6 +5,20 @@
   --accent: #0078d4;
 }
 
+.activityToggle {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.activityToggle[aria-pressed="true"] {
+  background: rgba(0,120,212,0.08);
+  border-color: rgba(0,120,212,0.18);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1a1a1a;
@@ -20,6 +34,7 @@
   color: var(--color-text-primary);
   font-family: var(--font-family);
   padding: var(--spacing-lg);
+  box-sizing: border-box;
 }
 
 .header {
@@ -93,11 +108,24 @@
   padding: 0;
   max-width: 1400px;
   margin: 0 auto;
+  /* limit main area height so columns can scroll independently */
+  height: calc(100vh - 200px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 320px;
+  flex: 0 0 320px;
+  display: flex;
+  align-items: flex-start;
 }
 
 @media (max-width: 1024px) {
   .main {
     flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 }
 

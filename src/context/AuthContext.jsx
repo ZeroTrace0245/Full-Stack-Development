@@ -4,10 +4,11 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [currentPage, setCurrentPage] = useState('login') // 'login' | 'dashboard' | 'board' | 'team' | 'reports'
+  const [currentPage, setCurrentPage] = useState('login') // 'login' | 'dashboard' | 'board' | 'team' | 'reports' | 'chat'
 
   const login = (username) => {
-    setUser({ username, loginTime: new Date() })
+    const role = username.toLowerCase() === 'admin' ? 'Admin' : 'Standard User'
+    setUser({ username, role, loginTime: new Date() })
     setCurrentPage('dashboard')
   }
 
@@ -32,6 +33,10 @@ export function AuthProvider({ children }) {
     setCurrentPage('reports')
   }
 
+  const goToChat = () => {
+    setCurrentPage('chat')
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -42,11 +47,13 @@ export function AuthProvider({ children }) {
       goToBoard,
       goToDashboard,
       goToTeam,
-      goToReports
+      goToReports,
+      goToChat
     }}>
       {children}
     </AuthContext.Provider>
   )
+
 }
 
 export function useAuth() {

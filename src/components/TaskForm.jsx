@@ -7,8 +7,12 @@ const TEAM_MEMBERS = getTeamMembers()
 export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, editingTask }) {
   const [formData, setFormData] = useState({
     title: '',
+    description: '',
     assignee: TEAM_MEMBERS[0],
     estimate: '2',
+    priority: 'Medium',
+    type: 'Feature',
+    dueDate: '',
     columnId: selectedColumn?.id || (columns[0]?.id || '')
   })
 
@@ -19,15 +23,23 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
     if (editingTask) {
       setFormData({
         title: editingTask.title || '',
+        description: editingTask.description || '',
         assignee: editingTask.assignee || TEAM_MEMBERS[0],
         estimate: editingTask.estimate?.toString() || '2',
+        priority: editingTask.priority || 'Medium',
+        type: editingTask.type || 'Feature',
+        dueDate: editingTask.dueDate || '',
         columnId: editingTask.columnId || selectedColumn?.id || (columns[0]?.id || '')
       })
     } else {
       setFormData({
         title: '',
+        description: '',
         assignee: TEAM_MEMBERS[0],
         estimate: '2',
+        priority: 'Medium',
+        type: 'Feature',
+        dueDate: '',
         columnId: selectedColumn?.id || (columns[0]?.id || '')
       })
     }
@@ -77,16 +89,24 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
     onSubmit({
       id: editingTask?.id || `t-${Date.now()}`,
       title: formData.title.trim(),
+      description: formData.description.trim(),
       assignee: formData.assignee,
       estimate: Number(formData.estimate),
+      priority: formData.priority,
+      type: formData.type,
+      dueDate: formData.dueDate,
       columnId: formData.columnId
     })
 
     // Reset form
     setFormData({
       title: '',
+      description: '',
       assignee: TEAM_MEMBERS[0],
       estimate: '2',
+      priority: 'Medium',
+      type: 'Feature',
+      dueDate: '',
       columnId: selectedColumn?.id || (columns[0]?.id || '')
     })
     setErrors({})
@@ -129,6 +149,51 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
           ))}
         </select>
         {errors.assignee && <p className={styles.errorMsg}>{errors.assignee}</p>}
+      </div>
+
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="description">
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          placeholder="Describe the task..."
+          value={formData.description}
+          onChange={handleChange}
+          className={`${styles.input}`}
+          rows={3}
+        />
+      </div>
+
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="priority">Priority</label>
+        <select id="priority" name="priority" value={formData.priority} onChange={handleChange} className={`${styles.input} ${styles.select}`}>
+          <option value="Low">🟢 Low</option>
+          <option value="Medium">🟡 Medium</option>
+          <option value="High">🔴 High</option>
+        </select>
+      </div>
+
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="type">Task Type</label>
+        <select id="type" name="type" value={formData.type} onChange={handleChange} className={`${styles.input} ${styles.select}`}>
+          <option value="Feature">Feature</option>
+          <option value="Bug">Bug</option>
+          <option value="UI">UI</option>
+        </select>
+      </div>
+
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="dueDate">Due Date</label>
+        <input
+          id="dueDate"
+          type="date"
+          name="dueDate"
+          value={formData.dueDate}
+          onChange={handleChange}
+          className={`${styles.input}`}
+        />
       </div>
 
       <div className={styles.group}>

@@ -1,10 +1,10 @@
 .card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
+  padding: calc(var(--spacing-sm) + 2px);
+  box-shadow: 0 6px 14px rgba(14, 30, 37, 0.06);
   transition: all var(--transition-fast);
   cursor: grab;
   user-select: none;
@@ -12,8 +12,40 @@
   position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-sm);
+  border: none; /* remove heavy borders for cleaner card */
+}
+
+.badges {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+}
+
+.badgeType {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(0, 120, 212, 0.3);
+  color: #aae0ff;
+}
+
+.description {
+  display: none; /* compact layout hides descriptions by default */
+}
+
+.dueDate {
+  font-size: 11px;
+  color: #ffb86c;
+  margin-bottom: 4px;
 }
 
 .card:active {
@@ -28,10 +60,9 @@
 }
 
 .card:hover:not(.dragging) {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px) scale(1.01);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 30px rgba(14,30,37,0.08);
+  transform: translateY(-3px);
 }
 
 .card:active:not(.dragging) {
@@ -42,30 +73,30 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
   justify-content: flex-start;
 }
 
 .title {
   margin: 0;
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  line-height: 1.4;
-  word-break: break-word;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: left;
 }
 
 .meta {
   margin: 0;
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--color-text-muted);
   display: flex;
   gap: var(--spacing-sm);
   align-items: center;
   padding-top: var(--spacing-xs);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: var(--spacing-sm);
 }
 
 .avatar {
@@ -86,10 +117,9 @@
 .actions {
   display: flex;
   gap: var(--spacing-xs);
-  opacity: 1;
+  align-items: center;
   margin-left: auto;
   flex-shrink: 0;
-  transition: opacity var(--transition-fast);
 }
 
 .actions.show {
@@ -111,19 +141,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  border: none;
   border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
   transition: all var(--transition-fast);
   padding: 0;
+  color: var(--color-text-primary);
 }
 
 .actionBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .actionBtn:active {
@@ -131,8 +160,31 @@
 }
 
 .actionBtn.delete:hover {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: rgba(255, 107, 107, 0.4);
+  color: var(--color-status-done-accent);
+}
+
+/* Menu button (single affordance) */
+.menuBtn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+/* Secondary actions are hidden by default and shown on hover */
+.secondary {
+  display: flex;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.card:hover .secondary {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Micro-animation for card entrance */

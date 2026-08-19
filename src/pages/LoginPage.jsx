@@ -46,7 +46,7 @@ export default function LoginPage() {
           <div className={styles.logo}>
             <span className={styles.logoIcon}>📊</span>
           </div>
-          <h1 className={styles.title}>NovaTrack</h1>
+          <h1 className={styles.title}>TeamPulse</h1>
           <p className={styles.subtitle}>Collaborative Task Management</p>
         </div>
 

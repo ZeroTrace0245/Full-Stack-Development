@@ -1,28 +1,109 @@
-import React from 'react'
-import { DndContext } from '@dnd-kit/core'
+import React, { useState } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import Column from './Column'
+import TaskCard from './TaskCard'
+import { useBoard } from '../context/BoardContext'
+import { useAuth } from '../context/AuthContext'
 import styles from './Board.module.css'
 
-export default function Board({ board, onCreateTask, onMoveTask, onDeleteTask, onEditTask }) {
-  const handleDragEnd = (event) => {
-    const { active, over } = event
+export default function Board({ onCreateTask, onDeleteTask, onEditTask }) {
+  const { board, handleMoveTask } = useBoard()
+  const { user } = useAuth()
+  const [activeTask, setActiveTask] = useState(null)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const handleDragStart = (event) => {
+    const { active } = event
+    if (active.data.current?.type === 'Task') {
+      setActiveTask(active.data.current.task)
+    }
+  }
+
+  const handleDragOver = (event) => {
+    const { active, over } = event
     if (!over) return
 
-    // Extract task ID and column ID from drag item
-    const taskId = active.id
-    const sourceColumnId = active.data?.current?.columnId
-    const destColumnId = over.data?.current?.columnId
+    const activeId = active.id
+    const overId = over.id
+    if (activeId === overId) return
 
-    // Only move if source and dest are different
-    if (sourceColumnId && destColumnId && sourceColumnId !== destColumnId) {
-      const destIndex = over.data?.current?.index || 0
-      onMoveTask(taskId, sourceColumnId, destColumnId, destIndex)
+    const isActiveTask = active.data.current?.type === 'Task'
+    const isOverTask = over.data.current?.type === 'Task'
+    const isOverColumn = over.data.current?.type === 'Column'
+
+    if (!isActiveTask) return
+
+    const sourceColId = active.data.current.columnId
+
+    if (isOverTask) {
+      const destColId = over.data.current.columnId
+
+      if (sourceColId !== destColId) {
+        const sourceCol = board.columns.find(c => c.id === sourceColId)
+        const destCol = board.columns.find(c => c.id === destColId)
+        const sourceIndex = sourceCol.tasks.findIndex(t => t.id === activeId)
+        const destIndex = destCol.tasks.findIndex(t => t.id === overId)
+
+        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destIndex, user?.username)
+      }
+    } else if (isOverColumn) {
+      const destColId = overId
+      if (sourceColId !== destColId) {
+        const sourceCol = board.columns.find(c => c.id === sourceColId)
+        const destCol = board.columns.find(c => c.id === destColId)
+        const sourceIndex = sourceCol.tasks.findIndex(t => t.id === activeId)
+
+        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destCol.tasks.length, user?.username)
+      }
+    }
+  }
+
+  const handleDragEnd = (event) => {
+    setActiveTask(null)
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+    if (activeId === overId) return
+
+    const isActiveTask = active.data.current?.type === 'Task'
+    const isOverTask = over.data.current?.type === 'Task'
+
+    if (isActiveTask && isOverTask) {
+      const sourceColId = active.data.current.columnId
+      const destColId = over.data.current.columnId
+
+      if (sourceColId === destColId) {
+        const col = board.columns.find(c => c.id === sourceColId)
+        const sourceIndex = col.tasks.findIndex(t => t.id === activeId)
+        const destIndex = col.tasks.findIndex(t => t.id === overId)
+        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destIndex, user?.username)
+      }
     }
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       <div className={styles.board}>
         <h2 className={styles.title}>{board.title}</h2>
         <div className={styles.columns}>
@@ -37,6 +118,11 @@ export default function Board({ board, onCreateTask, onMoveTask, onDeleteTask, o
           ))}
         </div>
       </div>
+      <DragOverlay>
+        {activeTask ? (
+          <TaskCard task={activeTask} />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }

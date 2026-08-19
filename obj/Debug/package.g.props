@@ -14,6 +14,8 @@
     <PackageJsonDependenciesDndKitSortable Condition="$(PackageJsonDependenciesDndKitSortable) == ''">^8.0.0</PackageJsonDependenciesDndKitSortable>
     <PackageJsonDependenciesDndKitCore Condition="$(PackageJsonDependenciesDndKitCore) == ''">^6.1.6</PackageJsonDependenciesDndKitCore>
     <PackageJsonDependenciesDndKitUtilities Condition="$(PackageJsonDependenciesDndKitUtilities) == ''">^3.2.2</PackageJsonDependenciesDndKitUtilities>
+    <PackageJsonDependenciesSocketIoClient Condition="$(PackageJsonDependenciesSocketIoClient) == ''">^4.6.1</PackageJsonDependenciesSocketIoClient>
+    <PackageJsonDependenciesAxios Condition="$(PackageJsonDependenciesAxios) == ''">^1.6.2</PackageJsonDependenciesAxios>
     <PackageJsonDevdependenciesTypesReact Condition="$(PackageJsonDevdependenciesTypesReact) == ''">^19.2.17</PackageJsonDevdependenciesTypesReact>
     <PackageJsonDevdependenciesTypesReactDom Condition="$(PackageJsonDevdependenciesTypesReactDom) == ''">^19.2.3</PackageJsonDevdependenciesTypesReactDom>
     <PackageJsonDevdependenciesVitejsPluginReact Condition="$(PackageJsonDevdependenciesVitejsPluginReact) == ''">^6.0.4</PackageJsonDevdependenciesVitejsPluginReact>

@@ -1,23 +1,28 @@
 .board {
   flex: 1;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--spacing-lg);
+  margin: 0 0 var(--spacing-sm);
   color: var(--color-text-primary);
-  padding-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
   border-bottom: 2px solid var(--color-accent-primary);
   letter-spacing: -0.3px;
 }
 
 .columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--spacing-lg);
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-md);
+  align-items: stretch;
+  /* Make columns area take the remaining height so individual column tasks can scroll */
+  height: calc(100% - 48px);
 }
 
 @media (max-width: 900px) {
@@ -29,6 +34,7 @@
 @media (max-width: 600px) {
   .columns {
     grid-template-columns: 1fr;
+    height: auto;
   }
 }
 
