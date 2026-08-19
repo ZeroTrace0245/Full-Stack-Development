@@ -37,10 +37,28 @@ The project follows a short milestone plan. Below is the current plan and what "
 Development Notes & Decisions
 -----------------------------
 
-- App display name: TeamPulse (replaced previous display name)
+- App display name: NovaTrack (replaced previous display name)
 - Persistence: board state persisted to localStorage via `src/utils/boardStorage.js` (no backend by default)
 - Charts: simple inline SVG charts are used for Reports (mock data). Consider integrating a chart library for richer visuals.
+State Management Architecture
+-----------------------------
+NovaTrack uses a centralized state management approach to handle the Kanban board data without prop-drilling, preparing the frontend for seamless backend integration.
 
+* **Global State:** Managed via the React Context API to provide data to the Board, Columns, and Task Cards.
+* **Persistence:** Data is temporarily saved to the browser's `localStorage` (via `src/utils/boardStorage.js`) to ensure tasks survive page refreshes during Milestone 1.
+* **Backend Readiness:** The local state is intentionally structured to mimic MongoDB documents, allowing for an easy swap to REST API `fetch()` calls in Milestone 2.
+
+**Task Data Schema (Current JSON Structure):**
+```json
+{
+  "_id": "task_1724063845",
+  "title": "Design Mica UI",
+  "description": "Build frosted glass CSS for task cards",
+  "status": "In Development",
+  "assignee": "Sachitha",
+  "priority": "High",
+  "type": "UI"
+}
 Contributing
 ------------
 
