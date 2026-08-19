@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="140" viewBox="0 0 800 140">
+  <rect width="100%" height="100%" fill="#262626" />
+  <rect x="8" y="8" width="784" height="124" rx="6" fill="#0f1724" stroke="#9fb8d9" stroke-width="2" />
+  <text x="20" y="30" fill="#cfe6ff" font-family="Segoe UI, Arial" font-size="13">Milestones At a Glance</text>
+
+  <!-- Header row -->
+  <rect x="20" y="40" width="760" height="28" fill="#0b1220" />
+  <text x="32" y="58" fill="#dbeafe" font-family="Segoe UI, Arial" font-size="12">#</text>
+  <text x="96" y="58" fill="#dbeafe" font-family="Segoe UI, Arial" font-size="12">Date</text>
+  <text x="220" y="58" fill="#dbeafe" font-family="Segoe UI, Arial" font-size="12">Milestone</text>
+  <text x="440" y="58" fill="#dbeafe" font-family="Segoe UI, Arial" font-size="12">What "done" looks like</text>
+
+  <!-- Rows -->
+  <rect x="20" y="68" width="760" height="22" fill="#0b1220" opacity="0.6" />
+  <text x="32" y="83" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">M1</text>
+  <text x="96" y="83" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">2 Aug</text>
+  <text x="220" y="83" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">Static Front-End Skeleton</text>
+  <text x="440" y="83" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">React app scaffolded, Board/Column/TaskCard UI with mock data</text>
+
+  <rect x="20" y="92" width="760" height="22" fill="#0b1220" />
+  <text x="32" y="107" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">M2</text>
+  <text x="96" y="107" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">9 Aug</text>
+  <text x="220" y="107" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">Working REST API</text>
+  <text x="440" y="107" fill="#e6f0ff" font-family="Segoe UI, Arial" font-size="12">Express CRUD API, JWT auth, frontend wired to endpoints</text>
+</svg>
