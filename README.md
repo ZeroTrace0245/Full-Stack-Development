@@ -1,4 +1,4 @@
-# TeamPulse
+# NovaTrack
 
 TeamPulse is a lightweight collaborative task management UI built with React + Vite. It provides a simple Kanban board (columns, task cards), team management, and reporting visualizations (mock data).
 
