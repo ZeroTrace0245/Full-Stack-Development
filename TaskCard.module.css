@@ -1,0 +1,255 @@
+.card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: var(--radius-md);
+  padding: calc(var(--spacing-sm) + 2px);
+  box-shadow: 0 6px 14px rgba(14, 30, 37, 0.06);
+  transition: all var(--transition-fast);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+  border: none; /* remove heavy borders for cleaner card */
+}
+
+.badges {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.2);
+}
+
+.badgeType {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(0, 120, 212, 0.3);
+  color: #aae0ff;
+}
+
+.description {
+  display: none; /* compact layout hides descriptions by default */
+}
+
+.dueDate {
+  font-size: 11px;
+  color: #ffb86c;
+  margin-bottom: 4px;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.card.dragging {
+  cursor: grabbing;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 120, 212, 0.4);
+  border: 2px solid rgba(0, 120, 212, 0.5);
+}
+
+.card:hover:not(.dragging) {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 30px rgba(14,30,37,0.08);
+  transform: translateY(-3px);
+}
+
+.card:active:not(.dragging) {
+  transform: translateY(-1px);
+}
+
+.cardContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  justify-content: flex-start;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.meta {
+  margin: 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding-top: var(--spacing-xs);
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.actions.show {
+  opacity: 1;
+}
+
+/* Always show actions on mobile */
+@media (max-width: 600px) {
+  .actions {
+    opacity: 1;
+  }
+}
+
+.actionBtn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0;
+  color: var(--color-text-primary);
+}
+
+.actionBtn:hover {
+  transform: scale(1.05);
+}
+
+.actionBtn:active {
+  transform: scale(0.95);
+}
+
+.actionBtn.delete:hover {
+  color: var(--color-status-done-accent);
+}
+
+/* Menu button (single affordance) */
+.menuBtn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
+/* Secondary actions are hidden by default and shown on hover */
+.secondary {
+  display: flex;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.card:hover .secondary {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Micro-animation for card entrance */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card {
+  animation: slideIn var(--transition-normal) ease-out;
+}
+
+/* Done state indicator */
+.card.done {
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.08),
+    rgba(74, 222, 128, 0.04)
+  );
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.card.done .title::before {
+  content: "✓ ";
+  color: var(--color-status-done-accent);
+  font-weight: var(--font-weight-bold);
+  margin-right: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: rgba(100, 100, 100, 0.15);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .card:hover {
+    background: rgba(100, 100, 100, 0.25);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: var(--spacing-sm);
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .title {
+    font-size: var(--font-size-sm);
+  }
+
+  .meta {
+    font-size: 10px;
+  }
+
+  .actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
