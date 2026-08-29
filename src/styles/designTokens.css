@@ -193,3 +193,25 @@ p  { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Application-wide graphite Mica theme */
+:root {
+  color-scheme: dark;
+  --color-bg-primary: #090b0f;
+  --color-bg-secondary: #11151c;
+  --color-surface-1: rgba(27, 32, 41, 0.78);
+  --color-surface-2: rgba(255, 255, 255, 0.055);
+  --color-text-primary: #f1f4f7;
+  --color-text-secondary: #a0a9b5;
+  --color-text-muted: #6f7986;
+  --color-accent-primary: #5f7fa9;
+  --color-accent-secondary: #8f7eae;
+  --color-accent-hover: #7696bd;
+  --color-status-todo-accent: #7f9ec4;
+  --color-status-doing-accent: #bd8e70;
+  --color-status-done-accent: #83a8b8;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.3);
+  --shadow-md: 0 12px 32px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.05);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.08);
+}
+body { background: radial-gradient(circle at 80% 0, #202938, transparent 30%), linear-gradient(145deg,#0e1116,#060709); }
+
