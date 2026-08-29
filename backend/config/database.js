@@ -1,53 +1,20 @@
-import sql from 'mssql';
-import dotenv from 'dotenv';
+import mongoose from 'mongoose'
 
-dotenv.config();
-
-const config = {
-  server: process.env.DB_SERVER || 'localhost',
-  port: parseInt(process.env.DB_PORT || '1433'),
-  database: process.env.DB_NAME || 'ProBoard',
-  authentication: {
-    type: 'default',
-    options: {
-      userName: process.env.DB_USER || 'sa',
-      password: process.env.DB_PASSWORD || 'YourPassword123!'
-    }
-  },
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-    connectionTimeout: 15000,
-    requestTimeout: 30000
-  }
-};
-
-let pool = null;
+export const useMockData = () => process.env.USE_MOCK_DATA !== 'false'
 
 export async function connectDatabase() {
-  try {
-    pool = new sql.ConnectionPool(config);
-    await pool.connect();
-    console.log('✅ Connected to SQL Server successfully');
-    return pool;
-  } catch (error) {
-    console.error('❌ Database connection error:', error.message);
-    throw error;
+  if (useMockData()) {
+    console.log('✅ Using in-memory mock data (Milestone 2 mode)')
+    return null
   }
-}
-
-export async function getPool() {
-  if (!pool) {
-    await connectDatabase();
-  }
-  return pool;
+  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/novasync'
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 })
+  console.log('✅ Connected to MongoDB successfully')
+  return mongoose.connection
 }
 
 export async function closeDatabase() {
-  if (pool) {
-    await pool.close();
-    console.log('Database connection closed');
-  }
+  if (useMockData()) return
+  await mongoose.disconnect()
+  console.log('MongoDB connection closed')
 }
-
-export { sql };

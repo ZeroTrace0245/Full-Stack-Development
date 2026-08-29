@@ -31,7 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: '✅ ProBoard Backend is running', timestamp: new Date().toISOString() });
+  res.json({ status: '✅ NovaSync Backend is running', timestamp: new Date().toISOString() });
 });
 
 // API Routes
@@ -164,7 +164,7 @@ async function startServer() {
 
     // Start HTTP server
     httpServer.listen(PORT, () => {
-      console.log(`\n🚀 ProBoard Backend Server running on port ${PORT}`);
+      console.log(`\n🚀 NovaSync Backend Server running on port ${PORT}`);
       console.log(`📡 Socket.IO listening for real-time events`);
       console.log(`🌐 CORS origin: ${process.env.SOCKET_IO_CORS || 'http://localhost:5173'}\n`);
     });

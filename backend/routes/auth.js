@@ -1,148 +1,73 @@
-import express from 'express';
-import bcryptjs from 'bcryptjs';
-import { getPool, sql } from '../config/database.js';
-import { authMiddleware, generateToken } from '../middleware/auth.js';
-import { body, validationResult } from 'express-validator';
+import express from 'express'
+import bcryptjs from 'bcryptjs'
+import { body, validationResult } from 'express-validator'
+import User from '../models/User.js'
+import Task from '../models/Task.js'
+import { authMiddleware, adminMiddleware, generateToken } from '../middleware/auth.js'
+import { useMockData } from '../config/database.js'
+import { mockId, mockStore } from '../db/mockStore.js'
 
-const router = express.Router();
+const router = express.Router()
+const validate = (req, res, next) => { const errors = validationResult(req); if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() }); next() }
 
-// Validation middleware
-const validateRegister = [
-  body('username').notEmpty().trim().escape(),
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 })
-];
-
-const validateLogin = [
-  body('username').notEmpty().trim(),
-  body('password').notEmpty()
-];
-
-// Register
-router.post('/register', validateRegister, async (req, res) => {
+router.post('/register', [body('username').trim().notEmpty(), body('email').isEmail().normalizeEmail(), body('password').isLength({ min: 6 }), validate], async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const { username, email, password } = req.body
+    if (useMockData()) {
+      const existing = mockStore.users.find((user) => user.username === username || user.email === email)
+      if (existing) return res.status(409).json({ error: existing.email === email ? 'Email address already exists' : 'Username already exists' })
+      const user = { id: mockId(), username, email, role: 'Standard User', passwordHash: await bcryptjs.hash(password, 10), createdAt: new Date() }
+      mockStore.users.push(user)
+      const { passwordHash: _passwordHash, ...safeUser } = user
+      return res.status(201).json({ message: 'User registered successfully', token: generateToken(user.id, user.username, user.role), user: safeUser })
     }
+    const existing = await User.findOne({ $or: [{ username }, { email }] })
+    if (existing) return res.status(409).json({ error: existing.email === email ? 'Email address already exists' : 'Username already exists' })
+    const user = await User.create({ username, email, passwordHash: await bcryptjs.hash(password, 10) })
+    res.status(201).json({ message: 'User registered successfully', token: generateToken(user.id, user.username, user.role), user })
+  } catch (error) { next(error) }
+})
 
-    const { username, email, password } = req.body;
-    const pool = await getPool();
-
-    // Check if user exists
-    const existingUser = await pool.request()
-      .input('username', sql.VarChar, username)
-      .query('SELECT id FROM Users WHERE username = @username');
-
-    if (existingUser.recordset.length > 0) {
-      return res.status(409).json({ error: 'Username already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcryptjs.hash(password, 10);
-
-    // Create user
-    const result = await pool.request()
-      .input('username', sql.VarChar, username)
-      .input('email', sql.VarChar, email)
-      .input('password_hash', sql.VarChar, hashedPassword)
-      .input('role', sql.VarChar, 'Standard User')
-      .input('created_at', sql.DateTime, new Date())
-      .query(`
-        INSERT INTO Users (username, email, password_hash, role, created_at)
-        OUTPUT INSERTED.id
-        VALUES (@username, @email, @password_hash, @role, @created_at)
-      `);
-
-    const userId = result.recordset[0].id;
-    const token = generateToken(userId, username, 'Standard User');
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: { id: userId, username, email, role: 'Standard User' }
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Login
-router.post('/login', validateLogin, async (req, res) => {
+router.post('/login', [body('identifier').trim().notEmpty(), body('password').notEmpty(), validate], async (req, res, next) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const { identifier, password } = req.body
+    if (useMockData()) {
+      const user = mockStore.users.find((item) => item.username === identifier || item.email === identifier.toLowerCase())
+      if (!user || !(await bcryptjs.compare(password, user.passwordHash))) return res.status(401).json({ error: 'Invalid username or password' })
+      user.lastLogin = new Date()
+      const { passwordHash: _passwordHash, ...safeUser } = user
+      return res.json({ message: 'Login successful', token: generateToken(user.id, user.username, user.role), user: safeUser })
     }
+    const user = await User.findOne({ $or: [{ username: identifier }, { email: identifier.toLowerCase() }] }).select('+passwordHash')
+    if (!user || !(await bcryptjs.compare(password, user.passwordHash))) return res.status(401).json({ error: 'Invalid username or password' })
+    user.lastLogin = new Date(); await user.save()
+    res.json({ message: 'Login successful', token: generateToken(user.id, user.username, user.role), user })
+  } catch (error) { next(error) }
+})
 
-    const { username, password } = req.body;
-    const pool = await getPool();
+router.get('/me', authMiddleware, async (req, res, next) => { try { if (useMockData()) { const user = mockStore.users.find((item) => item.id === req.user.userId); if (!user) return res.status(404).json({ error: 'User not found' }); const { passwordHash: _passwordHash, ...safeUser } = user; return res.json({ user: safeUser }) } const user = await User.findById(req.user.userId); if (!user) return res.status(404).json({ error: 'User not found' }); res.json({ user }) } catch (error) { next(error) } })
+router.get('/users', authMiddleware, async (_req, res, next) => { try { if (useMockData()) return res.json({ users: mockStore.users.map(({ passwordHash: _passwordHash, ...user }) => user) }); res.json({ users: await User.find().sort({ username: 1 }) }) } catch (error) { next(error) } })
 
-    // Find user
-    const result = await pool.request()
-      .input('username', sql.VarChar, username)
-      .query('SELECT id, username, email, password_hash, role FROM Users WHERE username = @username');
-
-    if (result.recordset.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const user = result.recordset[0];
-
-    // Verify password
-    const validPassword = await bcryptjs.compare(password, user.password_hash);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    // Generate token
-    const token = generateToken(user.id, user.username, user.role);
-
-    res.json({
-      message: 'Login successful',
-      token,
-      user: { id: user.id, username: user.username, email: user.email, role: user.role }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get current user
-router.get('/me', authMiddleware, async (req, res) => {
+router.patch('/users/:id/role', authMiddleware, adminMiddleware, [body('role').isIn(['Admin', 'Standard User']), validate], async (req, res, next) => {
   try {
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('id', sql.Int, req.user.userId)
-      .query('SELECT id, username, email, role, created_at FROM Users WHERE id = @id');
-
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    if (req.params.id === req.user.userId) return res.status(400).json({ error: 'You cannot change your own administrator role' })
+    if (useMockData()) {
+      const user = mockStore.users.find(item => item.id === req.params.id)
+      if (!user) return res.status(404).json({ error: 'User not found' })
+      user.role = req.body.role
+      const { passwordHash: _passwordHash, ...safeUser } = user
+      return res.json({ message: 'User role updated', user: safeUser })
     }
+    const user = await User.findByIdAndUpdate(req.params.id, { role: req.body.role }, { new: true, runValidators: true })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    res.json({ message: 'User role updated', user })
+  } catch (error) { next(error) }
+})
 
-    res.json({ user: result.recordset[0] });
-  } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+router.post('/users', authMiddleware, adminMiddleware, [body('username').trim().notEmpty(), body('email').isEmail().normalizeEmail(), body('password').isLength({ min: 6 }), body('role').isIn(['Admin', 'Standard User']), validate], async (req, res, next) => { try { const { username, email, password, role } = req.body; if (useMockData()) { if (mockStore.users.some(user => user.username === username || user.email === email)) return res.status(409).json({ error: 'Username or email already exists' }); const user = { id: mockId(), username, email, role, passwordHash: await bcryptjs.hash(password, 10), createdAt: new Date() }; mockStore.users.push(user); const { passwordHash: _passwordHash, ...safeUser } = user; return res.status(201).json({ user: safeUser }) } const exists = await User.findOne({ $or: [{ username }, { email }] }); if (exists) return res.status(409).json({ error: 'Username or email already exists' }); const user = await User.create({ username, email, role, passwordHash: await bcryptjs.hash(password, 10) }); res.status(201).json({ user }) } catch (error) { next(error) } })
 
-// Get all users
-router.get('/users', authMiddleware, async (req, res) => {
-  try {
-    const pool = await getPool();
+router.put('/users/:id', authMiddleware, adminMiddleware, [body('username').trim().notEmpty(), body('email').isEmail().normalizeEmail(), body('role').isIn(['Admin', 'Standard User']), validate], async (req, res, next) => { try { const updates = { username: req.body.username, email: req.body.email, role: req.body.role }; if (req.body.password) { if (req.body.password.length < 6) return res.status(400).json({ error: 'Password must contain at least 6 characters' }); updates.passwordHash = await bcryptjs.hash(req.body.password, 10) } if (useMockData()) { const user = mockStore.users.find(item => item.id === req.params.id); if (!user) return res.status(404).json({ error: 'User not found' }); Object.assign(user, updates); const { passwordHash: _passwordHash, ...safeUser } = user; return res.json({ user: safeUser }) } const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }); if (!user) return res.status(404).json({ error: 'User not found' }); res.json({ user }) } catch (error) { next(error) } })
 
-    const result = await pool.request()
-      .query('SELECT id, username, email, role, created_at FROM Users');
+router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res, next) => { try { if (req.params.id === req.user.userId) return res.status(400).json({ error: 'You cannot delete your own administrator account' }); if (useMockData()) { const index = mockStore.users.findIndex(item => item.id === req.params.id); if (index < 0) return res.status(404).json({ error: 'User not found' }); const [user] = mockStore.users.splice(index, 1); mockStore.tasks.forEach(task => { if (task.assignedUserId === user.id) { task.assignedUserId = null; task.assignmentLocked = false } }); return res.json({ message: 'User deleted' }) } const user = await User.findByIdAndDelete(req.params.id); if (!user) return res.status(404).json({ error: 'User not found' }); await Task.updateMany({ assignedUserId: user._id }, { assignedUserId: null, assignmentLocked: false }); res.json({ message: 'User deleted' }) } catch (error) { next(error) } })
 
-    res.json({ users: result.recordset });
-  } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-export default router;
+export default router
