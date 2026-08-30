@@ -98,3 +98,5 @@
     padding: var(--spacing-md);
   }
 }
+
+.overlay{background:#020305bf;backdrop-filter:blur(10px)}.modal{background:linear-gradient(145deg,#222832e8,#11151ce8);border-color:#ffffff18;box-shadow:0 28px 80px #000000a6,inset 0 1px #ffffff10;backdrop-filter:blur(30px) saturate(130%)}
