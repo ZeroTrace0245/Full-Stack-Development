@@ -143,3 +143,5 @@
     width: 100%;
   }
 }
+
+.input,.textarea,.select{background:#05070a99;border-color:#ffffff17;color:#eef2f6}.input:focus,.textarea:focus,.select:focus{border-color:#718aad;box-shadow:0 0 0 3px #718aad20}.btnSubmit{background:linear-gradient(180deg,#5d7597,#415776)}.btnSubmit:hover{background:#6983a6}.btnCancel{background:#ffffff08;border-color:#ffffff14}

@@ -144,3 +144,18 @@
   }
 }
 
+.authLoading {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  background: #123f31;
+  color: rgba(255, 255, 255, 0.82);
+  font: 600 14px/1.4 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Dark Mica workspace shell */
+.app{background:radial-gradient(circle at 76% 3%,#202a38 0,transparent 28%),linear-gradient(145deg,#0e1116,#060709)}
+.header{background:linear-gradient(145deg,#ffffff0d,#ffffff06);border-color:#ffffff14;box-shadow:0 18px 45px #00000045,inset 0 1px #ffffff0c;backdrop-filter:blur(28px) saturate(130%)}
+.activityToggle,.backBtn{background:#ffffff08;color:#a9bedb;border-color:#ffffff14}.activityToggle:hover,.backBtn:hover{background:#ffffff10;border-color:#ffffff26}.activityToggle[aria-pressed="true"]{background:#5f7fa929;border-color:#7696bd66}.authLoading{background:#080b0f;color:#b8c1cc}
+.workspaceLayout{min-height:100svh;padding-left:248px;background:#080a0e}.workspaceContent{min-height:100svh;min-width:0}.workspaceContent>div{min-height:100svh}@media(max-width:1100px) and (min-width:761px){.workspaceLayout{padding-left:82px}}@media(max-width:760px){.workspaceLayout{padding-left:0;padding-bottom:82px}.workspaceContent>div{padding-bottom:100px}}

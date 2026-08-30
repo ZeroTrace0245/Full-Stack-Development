@@ -3,8 +3,11 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { getUserInitials } from '../utils/generateUsers'
 import styles from './TaskCard.module.css'
+import { useAuth } from '../context/AuthContext'
 
 export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
+  const { user } = useAuth()
+  const canChange = !task.assignmentLocked || user?.role === 'Admin' || String(task.assignedUserId) === String(user?.id)
   const {
     attributes,
     listeners,
@@ -14,6 +17,7 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
     isDragging
   } = useSortable({
     id: task.id,
+    disabled: !canChange,
     data: {
       type: 'Task',
       task,
@@ -46,6 +50,7 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
         <div className={styles.badges}>
           {task.priority && <span className={styles.badge}>{priorityBadge[task.priority]} {task.priority}</span>}
           {task.type && <span className={styles.badgeType}>{task.type}</span>}
+          {task.assignmentLocked && <span className={styles.badge} title={canChange ? 'Assigned exclusively to you' : `Locked to ${task.assignee}`}>🔒 {canChange && user?.role !== 'Admin' ? 'Your task' : task.assignee}</span>}
         </div>
         <h4 className={styles.title}>{task.title}</h4>
         {task.description && <p className={styles.description}>{task.description}</p>}
@@ -59,7 +64,7 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
       </div>
 
       {/* Compact action menu: single affordance + hover-revealed secondary actions */}
-      <div className={styles.actions}>
+      {canChange && <div className={styles.actions}>
         <button
           className={styles.menuBtn}
           title="Actions"
@@ -91,7 +96,7 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
             🗑️
           </button>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

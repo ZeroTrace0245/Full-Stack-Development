@@ -1,15 +1,24 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
+function apiError(error) {
+  if (!error.response) {
+    return new Error('Cannot reach the server. Make sure the backend is running on port 5000.');
+  }
+  return error.response.data || error;
+}
 
 class APIClient {
   constructor() {
-    this.token = localStorage.getItem('authToken');
+    this.token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   }
 
-  setToken(token) {
+  setToken(token, remember = true) {
     this.token = token;
-    localStorage.setItem('authToken', token);
+    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
+    (remember ? localStorage : sessionStorage).setItem('authToken', token);
   }
 
   getToken() {
@@ -19,6 +28,7 @@ class APIClient {
   clearToken() {
     this.token = null;
     localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
   }
 
   getHeaders() {
@@ -45,10 +55,10 @@ class APIClient {
     }
   }
 
-  async login(username, password) {
+  async login(identifier, password) {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        username,
+        identifier,
         password
       });
       if (response.data.token) {
@@ -67,7 +77,7 @@ class APIClient {
       });
       return response.data;
     } catch (error) {
-      throw error.response?.data || error;
+      throw apiError(error);
     }
   }
 
@@ -82,10 +92,25 @@ class APIClient {
     }
   }
 
+  async updateUserRole(userId, role) {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/auth/users/${userId}/role`, { role }, { headers: this.getHeaders() });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+
+  async createUser(userData) { try { return (await axios.post(`${API_BASE_URL}/auth/users`, userData, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async updateUser(userId, userData) { try { return (await axios.put(`${API_BASE_URL}/auth/users/${userId}`, userData, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async deleteUser(userId) { try { return (await axios.delete(`${API_BASE_URL}/auth/users/${userId}`, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async setTaskAssignment(taskId, assignedUserId, assignmentLocked = true) { try { return (await axios.patch(`${API_BASE_URL}/tasks/${taskId}/assignment`, { assignedUserId, assignmentLocked }, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+
   // ============ TASK ENDPOINTS ============
   async getTasksForBoard(boardId) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/tasks/board/${boardId}`, {
+      const response = await axios.get(`${API_BASE_URL}/tasks`, {
+        params: { boardId },
         headers: this.getHeaders()
       });
       return response.data;
@@ -172,6 +197,15 @@ class APIClient {
       }, {
         headers: this.getHeaders()
       });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+
+  async getAdminTeamMessages(limit = 100) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/messages/admin/team?limit=${limit}`, { headers: this.getHeaders() });
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

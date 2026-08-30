@@ -16,6 +16,11 @@ export const authMiddleware = (req, res, next) => {
   }
 };
 
+export const adminMiddleware = (req, res, next) => {
+  if (req.user?.role !== 'Admin') return res.status(403).json({ error: 'Administrator access required' });
+  next();
+};
+
 export const generateToken = (userId, username, role) => {
   return jwt.sign(
     { userId, username, role },

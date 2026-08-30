@@ -1,3 +1,2 @@
 D:\VS studio\Fullstakes\obj\Debug\full-stack.esproj.CoreCompileInputs.cache
 D:\VS studio\full-stack\obj\Debug\full-stack.esproj.CoreCompileInputs.cache
-D:\GitHub repos\Full-Stack-Development\obj\Debug\full-stack.esproj.CoreCompileInputs.cache

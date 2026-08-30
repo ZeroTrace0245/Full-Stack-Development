@@ -1,112 +1,20 @@
-import express from 'express';
-import { getPool, sql } from '../config/database.js';
-import { authMiddleware } from '../middleware/auth.js';
+import express from 'express'
+import { body, validationResult } from 'express-validator'
+import Message from '../models/Message.js'
+import { adminMiddleware, authMiddleware } from '../middleware/auth.js'
+import { isMockData as useMockData } from '../config/database.js'
+import { mockId, mockStore, persistStore } from '../db/mockStore.js'
 
-const router = express.Router();
+const router = express.Router()
+router.use(authMiddleware)
+const validateMessage = [body('content').trim().isLength({ min: 1, max: 2000 }).withMessage('Message must contain 1 to 2000 characters'), (req, res, next) => { const errors = validationResult(req); if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg }); next() }]
+const safeUser = req => ({ id: req.user.userId, username: req.user.username })
+const serializeMock = message => { const found = mockStore.users.find(user => user.id === message.sender); return { ...message, sender: { id: message.sender, username: message.senderUser?.username || found?.username || 'Team member' } } }
 
-// Get team chat messages for a project
-router.get('/team/:projectId', authMiddleware, async (req, res) => {
-  try {
-    const { projectId } = req.params;
-    const limit = req.query.limit || 50;
-    const pool = await getPool();
+router.get('/admin/team', adminMiddleware, async (req, res, next) => { try { const limit = Math.min(Number(req.query.limit) || 100, 250); if (useMockData()) return res.json({ messages: mockStore.messages.filter(message => message.kind === 'team').slice(-limit).map(serializeMock) }); const messages = await Message.find({ kind: 'team' }).populate('sender', 'username').sort({ createdAt: -1 }).limit(limit); res.json({ messages: messages.reverse() }) } catch (error) { next(error) } })
+router.get('/team/:projectId', async (req, res, next) => { try { const limit = Math.min(Number(req.query.limit) || 50, 100); if (useMockData()) return res.json({ messages: mockStore.messages.filter(message => message.kind === 'team' && message.projectId === req.params.projectId).slice(-limit).map(serializeMock) }); const messages = await Message.find({ kind: 'team', projectId: req.params.projectId }).populate('sender', 'username').sort({ createdAt: -1 }).limit(limit); res.json({ messages: messages.reverse() }) } catch (error) { next(error) } })
+router.post('/team', validateMessage, async (req, res, next) => { try { const projectId = String(req.body.projectId || ''); if (!projectId) return res.status(400).json({ error: 'Project is required' }); let message; if (useMockData()) { message = { id: mockId(), kind: 'team', sender: req.user.userId, senderUser: safeUser(req), projectId, content: req.body.content, createdAt: new Date().toISOString() }; mockStore.messages.push(message); persistStore(); message = serializeMock(message) } else { message = await (await Message.create({ kind: 'team', sender: req.user.userId, projectId, content: req.body.content })).populate('sender', 'username') } req.app.get('io')?.emit('message:team:received', message); res.status(201).json({ message }) } catch (error) { next(error) } })
+router.get('/direct/:otherUserId', async (req, res, next) => { try { const limit = Math.min(Number(req.query.limit) || 50, 100), a = String(req.user.userId), b = String(req.params.otherUserId); if (useMockData()) return res.json({ messages: mockStore.messages.filter(message => message.kind === 'direct' && ((String(message.sender) === a && String(message.receiver) === b) || (String(message.sender) === b && String(message.receiver) === a))).slice(-limit).map(serializeMock) }); const messages = await Message.find({ kind: 'direct', $or: [{ sender: a, receiver: b }, { sender: b, receiver: a }] }).populate('sender receiver', 'username').sort({ createdAt: -1 }).limit(limit); res.json({ messages: messages.reverse() }) } catch (error) { next(error) } })
+router.post('/direct', validateMessage, async (req, res, next) => { try { const receiverId = String(req.body.receiverId || ''); if (!receiverId || receiverId === String(req.user.userId)) return res.status(400).json({ error: 'Choose another team member' }); let message; if (useMockData()) { if (!mockStore.users.some(user => user.id === receiverId)) return res.status(404).json({ error: 'Recipient not found' }); message = { id: mockId(), kind: 'direct', sender: req.user.userId, senderUser: safeUser(req), receiver: receiverId, content: req.body.content, createdAt: new Date().toISOString() }; mockStore.messages.push(message); persistStore(); message = serializeMock(message) } else { message = await (await Message.create({ kind: 'direct', sender: req.user.userId, receiver: receiverId, content: req.body.content })).populate('sender receiver', 'username') } req.app.get('sendDirectMessage')?.(receiverId, message); res.status(201).json({ message }) } catch (error) { next(error) } })
 
-    const result = await pool.request()
-      .input('project_id', sql.Int, projectId)
-      .input('limit', sql.Int, limit)
-      .query(`
-        SELECT TOP (@limit) m.*, u.username as sender_name
-        FROM Messages m
-        JOIN Users u ON m.sender_id = u.id
-        WHERE m.project_id = @project_id
-        ORDER BY m.created_at DESC
-      `);
-
-    res.json({ messages: result.recordset.reverse() });
-  } catch (error) {
-    console.error('Get team messages error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Send team chat message
-router.post('/team', authMiddleware, async (req, res) => {
-  try {
-    const { projectId, content } = req.body;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('sender_id', sql.Int, req.user.userId)
-      .input('project_id', sql.Int, projectId)
-      .input('content', sql.VarChar, content)
-      .input('created_at', sql.DateTime, new Date())
-      .query(`
-        INSERT INTO Messages (sender_id, project_id, content, created_at)
-        OUTPUT INSERTED.*
-        VALUES (@sender_id, @project_id, @content, @created_at)
-      `);
-
-    res.status(201).json({ message: result.recordset[0] });
-  } catch (error) {
-    console.error('Send team message error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get direct messages between two users
-router.get('/direct/:otherUserId', authMiddleware, async (req, res) => {
-  try {
-    const { otherUserId } = req.params;
-    const limit = req.query.limit || 50;
-    const userId = req.user.userId;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('user_id', sql.Int, userId)
-      .input('other_user_id', sql.Int, otherUserId)
-      .input('limit', sql.Int, limit)
-      .query(`
-        SELECT TOP (@limit) dm.*, 
-               sender.username as sender_name,
-               receiver.username as receiver_name
-        FROM DirectMessages dm
-        JOIN Users sender ON dm.sender_id = sender.id
-        JOIN Users receiver ON dm.receiver_id = receiver.id
-        WHERE (dm.sender_id = @user_id AND dm.receiver_id = @other_user_id)
-           OR (dm.sender_id = @other_user_id AND dm.receiver_id = @user_id)
-        ORDER BY dm.created_at DESC
-      `);
-
-    res.json({ messages: result.recordset.reverse() });
-  } catch (error) {
-    console.error('Get direct messages error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Send direct message
-router.post('/direct', authMiddleware, async (req, res) => {
-  try {
-    const { receiverId, content } = req.body;
-    const senderId = req.user.userId;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('sender_id', sql.Int, senderId)
-      .input('receiver_id', sql.Int, receiverId)
-      .input('content', sql.VarChar, content)
-      .input('created_at', sql.DateTime, new Date())
-      .query(`
-        INSERT INTO DirectMessages (sender_id, receiver_id, content, created_at)
-        OUTPUT INSERTED.*
-        VALUES (@sender_id, @receiver_id, @content, @created_at)
-      `);
-
-    res.status(201).json({ message: result.recordset[0] });
-  } catch (error) {
-    console.error('Send direct message error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-export default router;
+export default router

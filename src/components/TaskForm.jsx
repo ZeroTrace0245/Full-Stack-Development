@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { getTeamMembers } from '../utils/generateUsers'
+import apiClient from '../api/client'
 import styles from './TaskForm.module.css'
 
-const TEAM_MEMBERS = getTeamMembers()
-
 export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, editingTask }) {
+  const [teamMembers, setTeamMembers] = useState([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [usersError, setUsersError] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignee: TEAM_MEMBERS[0],
+    assignee: '',
     estimate: '2',
     priority: 'Medium',
     type: 'Feature',
@@ -18,13 +19,34 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
 
   const [errors, setErrors] = useState({})
 
+  useEffect(() => {
+    let active = true
+
+    apiClient.getAllUsers()
+      .then(({ users = [] }) => {
+        if (!active) return
+        setTeamMembers(users)
+        setUsersError('')
+      })
+      .catch(error => {
+        if (!active) return
+        setTeamMembers([])
+        setUsersError(error.error || error.message || 'Could not load users')
+      })
+      .finally(() => {
+        if (active) setUsersLoading(false)
+      })
+
+    return () => { active = false }
+  }, [])
+
   // Update form when editingTask changes
   useEffect(() => {
     if (editingTask) {
       setFormData({
         title: editingTask.title || '',
         description: editingTask.description || '',
-        assignee: editingTask.assignee || TEAM_MEMBERS[0],
+        assignee: editingTask.assignee || '',
         estimate: editingTask.estimate?.toString() || '2',
         priority: editingTask.priority || 'Medium',
         type: editingTask.type || 'Feature',
@@ -35,7 +57,7 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
       setFormData({
         title: '',
         description: '',
-        assignee: TEAM_MEMBERS[0],
+        assignee: '',
         estimate: '2',
         priority: 'Medium',
         type: 'Feature',
@@ -102,7 +124,7 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
     setFormData({
       title: '',
       description: '',
-      assignee: TEAM_MEMBERS[0],
+      assignee: '',
       estimate: '2',
       priority: 'Medium',
       type: 'Feature',
@@ -140,14 +162,19 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
           name="assignee"
           value={formData.assignee}
           onChange={handleChange}
+          disabled={usersLoading || teamMembers.length === 0}
           className={`${styles.input} ${styles.select} ${errors.assignee ? styles.error : ''}`}
         >
-          {TEAM_MEMBERS.map(member => (
-            <option key={member} value={member}>
-              {member}
+          <option value="">
+            {usersLoading ? 'Loading users…' : teamMembers.length ? 'Select a user' : 'No users available'}
+          </option>
+          {teamMembers.map(member => (
+            <option key={member.id || member._id} value={member.username}>
+              {member.username}
             </option>
           ))}
         </select>
+        {usersError && <p className={styles.errorMsg}>{usersError}</p>}
         {errors.assignee && <p className={styles.errorMsg}>{errors.assignee}</p>}
       </div>
 

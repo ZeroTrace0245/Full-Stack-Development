@@ -491,7 +491,7 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
+@media (min-width: 0px) {
   .header {
     background: rgba(40, 40, 40, 0.7);
   }
@@ -524,3 +524,7 @@
     background: rgba(255, 255, 255, 0.15);
   }
 }
+
+/* Graphite Mica chat */
+.chatContainer{background:radial-gradient(circle at 78% 0,#202a38,transparent 30%),linear-gradient(145deg,#0e1116,#060709);color:#edf2f6}.header{background:linear-gradient(145deg,#ffffff0d,#ffffff06);border:1px solid #ffffff14;box-shadow:0 18px 45px #00000045,inset 0 1px #ffffff0c;backdrop-filter:blur(28px) saturate(130%)}.header h1,.chatTop h2,.usersSidebar h2,.chatAreaHeader h2{color:#f0f3f6}.subtitle,.modeInfo{color:#7f8995}.backBtn{background:#ffffff08;color:#a9bedb;border:1px solid #ffffff14}.backBtn:hover{background:#ffffff12}.teamChat,.directMessagesContainer{background:linear-gradient(145deg,#ffffff0c,#ffffff05);border:1px solid #ffffff14;box-shadow:0 20px 50px #0000004d,inset 0 1px #ffffff0b;backdrop-filter:blur(26px) saturate(125%)}.chatTop,.chatAreaHeader,.usersSidebar{background:#ffffff05;border-color:#ffffff0d}.messageListContainer{background:#05070a4d}.message{background:#ffffff0a;border:1px solid #ffffff0c}.ownMessage{background:#5f7fa926;border-color:#7696bd38}.sender,.messageBody,.userName{color:#e1e7ed}.time,.userStatus,.typingIndicator{color:#737e8a}.messageForm{background:#ffffff05;border-color:#ffffff0d}.messageInput{background:#05070a99!important;border-color:#ffffff17!important;color:#eef2f6!important}.messageInput:focus{background:#070a0e!important;border-color:#718aad!important;box-shadow:0 0 0 3px #718aad20}.sendBtn{background:linear-gradient(180deg,#5d7597,#415776)}.sendBtn:hover{background:#6983a6}.userOption{background:transparent}.userOption:hover{background:#ffffff08}.userOption.selected{background:#5f7fa921;border-color:#718aad}.userIcon{background:linear-gradient(135deg,#9eb4d0,#607998)}.modeToggle{background:#ffffff08}.modeBtn{color:#85909c}.modeBtn.active{background:#5f7fa9;color:#fff}
+.userOption{width:100%;border:1px solid transparent;color:inherit;text-align:left}.userInfo{display:flex;flex-direction:column}.chatError{margin:0 0 10px;padding:10px 13px;border:1px solid #d56d6340;border-radius:9px;background:#a832291f;color:#ffaaa1;font-size:12px}

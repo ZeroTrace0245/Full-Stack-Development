@@ -1,21 +1,61 @@
-import React, { createContext, useState, useContext } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import apiClient from '../api/client'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [currentPage, setCurrentPage] = useState('login') // 'login' | 'dashboard' | 'board' | 'team' | 'reports' | 'chat'
+  const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState('login')
 
-  const login = (username) => {
-    const role = username.toLowerCase() === 'admin' ? 'Admin' : 'Standard User'
-    setUser({ username, role, loginTime: new Date() })
+  const finishLogin = useCallback((result, remember = true) => {
+    apiClient.setToken(result.token, remember)
+    setUser(result.user)
     setCurrentPage('dashboard')
-  }
+  }, [])
 
-  const logout = () => {
+  useEffect(() => {
+    if (!apiClient.getToken()) {
+      setIsLoading(false)
+      return
+    }
+    apiClient.getCurrentUser()
+      .then(({ user: currentUser }) => {
+        setUser(currentUser)
+        setCurrentPage('dashboard')
+      })
+      .catch(() => apiClient.clearToken())
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const login = useCallback(async (identifier, password, remember = false) => {
+    const result = await apiClient.login(identifier, password)
+    finishLogin(result, remember)
+    return result
+  }, [finishLogin])
+
+  const adminLogin = useCallback(async (identifier, password, remember = false) => {
+    const result = await apiClient.login(identifier, password)
+    if (result.user?.role !== 'Admin') {
+      apiClient.clearToken()
+      throw new Error('This account does not have administrator access.')
+    }
+    finishLogin(result, remember)
+    setCurrentPage('admin')
+    return result
+  }, [finishLogin])
+
+  const register = useCallback(async (username, email, password) => {
+    const result = await apiClient.register(username, email, password)
+    finishLogin(result, true)
+    return result
+  }, [finishLogin])
+
+  const logout = useCallback(() => {
+    apiClient.clearToken()
     setUser(null)
     setCurrentPage('login')
-  }
+  }, [])
 
   const goToBoard = () => {
     setCurrentPage('board')
@@ -37,22 +77,33 @@ export function AuthProvider({ children }) {
     setCurrentPage('chat')
   }
 
-  return (
-    <AuthContext.Provider value={{
+  const goToAdmin = () => {
+    setCurrentPage('admin')
+  }
+
+  const goToAdminLogin = () => setCurrentPage('admin-login')
+  const goToLogin = () => setCurrentPage('login')
+
+  const value = useMemo(() => ({
       user,
       isLoggedIn: !!user,
+      isLoading,
       currentPage,
       login,
+      adminLogin,
+      register,
       logout,
       goToBoard,
       goToDashboard,
       goToTeam,
       goToReports,
       goToChat
-    }}>
-      {children}
-    </AuthContext.Provider>
-  )
+      ,goToAdmin
+      ,goToAdminLogin,
+      goToLogin
+  }), [user, isLoading, currentPage, login, register, logout])
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 
 }
 

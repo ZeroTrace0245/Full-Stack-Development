@@ -1,116 +1,16 @@
-import express from 'express';
-import { getPool, sql } from '../config/database.js';
-import { authMiddleware } from '../middleware/auth.js';
-
-const router = express.Router();
-
-// Get all tasks for a board
-router.get('/board/:boardId', authMiddleware, async (req, res) => {
-  try {
-    const { boardId } = req.params;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('boardId', sql.Int, boardId)
-      .query(`
-        SELECT t.*, u.username as assigneeName
-        FROM Tasks t
-        LEFT JOIN Users u ON t.assignee_id = u.id
-        WHERE t.board_id = @boardId
-        ORDER BY t.column_id, t.task_order
-      `);
-
-    res.json({ tasks: result.recordset });
-  } catch (error) {
-    console.error('Get tasks error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Create task
-router.post('/', authMiddleware, async (req, res) => {
-  try {
-    const { title, description, boardId, columnId, assigneeId, priority, type, dueDate, estimate } = req.body;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('title', sql.VarChar, title)
-      .input('description', sql.VarChar, description || '')
-      .input('board_id', sql.Int, boardId)
-      .input('column_id', sql.Int, columnId)
-      .input('assignee_id', sql.Int, assigneeId || null)
-      .input('priority', sql.VarChar, priority || 'Medium')
-      .input('type', sql.VarChar, type || 'Feature')
-      .input('due_date', sql.Date, dueDate || null)
-      .input('estimate', sql.Int, estimate || 0)
-      .input('created_by', sql.Int, req.user.userId)
-      .input('created_at', sql.DateTime, new Date())
-      .query(`
-        INSERT INTO Tasks (title, description, board_id, column_id, assignee_id, priority, type, due_date, estimate, created_by, created_at)
-        OUTPUT INSERTED.*
-        VALUES (@title, @description, @board_id, @column_id, @assignee_id, @priority, @type, @due_date, @estimate, @created_by, @created_at)
-      `);
-
-    res.status(201).json({ task: result.recordset[0] });
-  } catch (error) {
-    console.error('Create task error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update task
-router.put('/:taskId', authMiddleware, async (req, res) => {
-  try {
-    const { taskId } = req.params;
-    const { title, description, columnId, assigneeId, priority, type, dueDate, estimate } = req.body;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('id', sql.Int, taskId)
-      .input('title', sql.VarChar, title)
-      .input('description', sql.VarChar, description || '')
-      .input('column_id', sql.Int, columnId)
-      .input('assignee_id', sql.Int, assigneeId || null)
-      .input('priority', sql.VarChar, priority)
-      .input('type', sql.VarChar, type)
-      .input('due_date', sql.Date, dueDate || null)
-      .input('estimate', sql.Int, estimate)
-      .input('updated_at', sql.DateTime, new Date())
-      .query(`
-        UPDATE Tasks
-        SET title = @title, description = @description, column_id = @column_id,
-            assignee_id = @assignee_id, priority = @priority, type = @type,
-            due_date = @due_date, estimate = @estimate, updated_at = @updated_at
-        WHERE id = @id
-        SELECT * FROM Tasks WHERE id = @id
-      `);
-
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
-
-    res.json({ task: result.recordset[0] });
-  } catch (error) {
-    console.error('Update task error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Delete task
-router.delete('/:taskId', authMiddleware, async (req, res) => {
-  try {
-    const { taskId } = req.params;
-    const pool = await getPool();
-
-    const result = await pool.request()
-      .input('id', sql.Int, taskId)
-      .query('DELETE FROM Tasks WHERE id = @id');
-
-    res.json({ message: 'Task deleted successfully', deletedCount: result.rowsAffected[0] });
-  } catch (error) {
-    console.error('Delete task error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-export default router;
+import express from 'express'
+import { body, validationResult } from 'express-validator'
+import Task from '../models/Task.js'
+import User from '../models/User.js'
+import { authMiddleware, adminMiddleware } from '../middleware/auth.js'
+import { isMockData as useMockData } from '../config/database.js'
+import { mockId, mockStore, persistStore } from '../db/mockStore.js'
+const router=express.Router();router.use(authMiddleware)
+const canChange=(task,user)=>!task.assignmentLocked||user.role==='Admin'||String(task.assignedUserId)===String(user.userId)
+router.get('/',async(req,res,next)=>{try{if(useMockData())return res.json({tasks:mockStore.tasks.filter(task=>!req.query.boardId||task.boardId===req.query.boardId)});res.json({tasks:await Task.find(req.query.boardId?{boardId:req.query.boardId}:{}).sort({columnId:1,order:1,createdAt:1})})}catch(error){next(error)}})
+router.get('/:taskId',async(req,res,next)=>{try{const task=useMockData()?mockStore.tasks.find(item=>item.id===req.params.taskId):await Task.findById(req.params.taskId);if(!task)return res.status(404).json({error:'Task not found'});res.json({task})}catch(error){next(error)}})
+router.post('/',[body('title').trim().notEmpty(),body('columnId').trim().notEmpty()],async(req,res,next)=>{try{const errors=validationResult(req);if(!errors.isEmpty())return res.status(400).json({errors:errors.array()});const input={...req.body};if(req.user.role!=='Admin'){delete input.assignedUserId;delete input.assignmentLocked}if(useMockData()){const task={...input,id:mockId(),createdBy:req.user.userId,createdAt:new Date()};mockStore.tasks.push(task);persistStore();return res.status(201).json({task})}res.status(201).json({task:await Task.create({...input,createdBy:req.user.userId})})}catch(error){next(error)}})
+router.put('/:taskId',async(req,res,next)=>{try{const allowed=['title','description','boardId','columnId','assignee','priority','type','dueDate','estimate','order'];if(req.user.role==='Admin')allowed.push('assignedUserId','assignmentLocked');const updates=Object.fromEntries(Object.entries(req.body).filter(([key])=>allowed.includes(key)));if(useMockData()){const task=mockStore.tasks.find(item=>item.id===req.params.taskId);if(!task)return res.status(404).json({error:'Task not found'});if(!canChange(task,req.user))return res.status(403).json({error:'This task is locked to its assigned member'});Object.assign(task,updates,{updatedAt:new Date()});persistStore();return res.json({task})}const task=await Task.findById(req.params.taskId);if(!task)return res.status(404).json({error:'Task not found'});if(!canChange(task,req.user))return res.status(403).json({error:'This task is locked to its assigned member'});Object.assign(task,updates);await task.save();res.json({task})}catch(error){next(error)}})
+router.patch('/:taskId/assignment',adminMiddleware,[body('assignmentLocked').isBoolean()],async(req,res,next)=>{try{const user=req.body.assignedUserId?(useMockData()?mockStore.users.find(item=>item.id===req.body.assignedUserId):await User.findById(req.body.assignedUserId)):null;if(req.body.assignedUserId&&!user)return res.status(404).json({error:'Assigned user not found'});const updates={assignedUserId:req.body.assignedUserId||null,assignmentLocked:Boolean(req.body.assignmentLocked&&req.body.assignedUserId),assignee:user?.username||''};if(useMockData()){const task=mockStore.tasks.find(item=>item.id===req.params.taskId);if(!task)return res.status(404).json({error:'Task not found'});Object.assign(task,updates,{updatedAt:new Date()});persistStore();return res.json({task})}const task=await Task.findByIdAndUpdate(req.params.taskId,updates,{new:true});if(!task)return res.status(404).json({error:'Task not found'});res.json({task})}catch(error){next(error)}})
+router.delete('/:taskId',async(req,res,next)=>{try{if(useMockData()){const index=mockStore.tasks.findIndex(item=>item.id===req.params.taskId);if(index<0)return res.status(404).json({error:'Task not found'});if(!canChange(mockStore.tasks[index],req.user))return res.status(403).json({error:'This task is locked to its assigned member'});const[task]=mockStore.tasks.splice(index,1);persistStore();return res.json({message:'Task deleted successfully',task})}const task=await Task.findById(req.params.taskId);if(!task)return res.status(404).json({error:'Task not found'});if(!canChange(task,req.user))return res.status(403).json({error:'This task is locked to its assigned member'});await task.deleteOne();res.json({message:'Task deleted successfully',task})}catch(error){next(error)}})
+export default router

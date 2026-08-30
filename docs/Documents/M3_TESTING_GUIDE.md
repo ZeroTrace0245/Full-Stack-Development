@@ -42,7 +42,7 @@
 ### Step 1: Login Page
 1. Open http://localhost:54995
 2. You should see the login page with:
-   - "TeamPulse" title and 📊 logo
+   - "NovaTrack" title and 📊 logo
    - Username field
    - Password field
    - "Remember me" checkbox

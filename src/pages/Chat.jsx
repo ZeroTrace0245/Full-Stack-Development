@@ -1,278 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import socketService from '../services/socketService';
-import styles from './Chat.module.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import apiClient from '../api/client'
+import socketService from '../services/socketService'
+import styles from './Chat.module.css'
+
+const PROJECT_ID = 'board-1'
+const idOf = value => String(value?.id ?? value?._id ?? value ?? '')
+const senderOf = message => message.sender?.username || message.senderUsername || message.username || 'Team member'
+const senderIdOf = message => idOf(message.sender?.id ?? message.sender?._id ?? message.senderId ?? message.userId ?? message.sender)
+const timeOf = message => message.createdAt || message.timestamp
+const mergeMessage = (items, message) => items.some(item => idOf(item) === idOf(message)) ? items : [...items, message]
 
 export default function Chat() {
-  const { user, goToDashboard } = useAuth();
-  const [activeMode, setActiveMode] = useState('team'); // 'team' or 'direct'
-  const [teamMessages, setTeamMessages] = useState([]);
-  const [directMessages, setDirectMessages] = useState({});
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [allUsers, setAllUsers] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
-  const [messageContent, setMessageContent] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState(null);
+  const { user, goToDashboard } = useAuth()
+  const [activeMode, setActiveMode] = useState('team')
+  const [teamMessages, setTeamMessages] = useState([])
+  const [directMessages, setDirectMessages] = useState({})
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [allUsers, setAllUsers] = useState([])
+  const [onlineUsers, setOnlineUsers] = useState(new Set())
+  const [messageContent, setMessageContent] = useState('')
+  const [typingUser, setTypingUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
+  const typingTimer = useRef(null)
+  const currentUserId = idOf(user)
+  const members = useMemo(() => allUsers.filter(member => idOf(member) !== currentUserId), [allUsers, currentUserId])
 
-  // Sample team members (in production, fetch from API)
   useEffect(() => {
-    setAllUsers([
-      { id: 1, username: 'Tharun', email: 'tharun@team.com' },
-      { id: 2, username: 'John Doe', email: 'john@team.com' },
-      { id: 3, username: 'Jane Smith', email: 'jane@team.com' },
-      { id: 4, username: 'Mike Wilson', email: 'mike@team.com' }
-    ]);
-  }, []);
+    let active = true
+    Promise.all([apiClient.getAllUsers(), apiClient.getTeamMessages(PROJECT_ID)]).then(([usersResult, messagesResult]) => {
+      if (active) { setAllUsers(usersResult.users || []); setTeamMessages(messagesResult.messages || []) }
+    }).catch(err => active && setError(err.error || err.message || 'Could not load messages.')).finally(() => active && setLoading(false))
+    return () => { active = false }
+  }, [])
 
-  // Socket.IO listeners
   useEffect(() => {
-    socketService.on('message:team:received', (message) => {
-      setTeamMessages(prev => [...prev, message]);
-    });
+    if (!user) return
+    socketService.connect(user.id, user.username)
+    const onTeam = message => { if (String(message.projectId) === PROJECT_ID) setTeamMessages(items => mergeMessage(items, message)) }
+    const onDirect = message => {
+      const conversationId = senderIdOf(message) === currentUserId ? idOf(message.receiverId || message.receiver) : senderIdOf(message)
+      setDirectMessages(current => ({ ...current, [conversationId]: mergeMessage(current[conversationId] || [], message) }))
+    }
+    const onOnline = data => setOnlineUsers(current => new Set(current).add(idOf(data.userId)))
+    const onOffline = data => setOnlineUsers(current => { const next = new Set(current); next.delete(idOf(data.userId)); return next })
+    const onTyping = data => { if (idOf(data.userId) !== currentUserId) { setTypingUser(data.username); clearTimeout(typingTimer.current); typingTimer.current = setTimeout(() => setTypingUser(null), 2500) } }
+    socketService.on('message:team:received', onTeam); socketService.on('message:direct:received', onDirect); socketService.on('user:online', onOnline); socketService.on('user:offline', onOffline); socketService.on('user:typing:indicator', onTyping)
+    return () => { clearTimeout(typingTimer.current); socketService.off('message:team:received', onTeam); socketService.off('message:direct:received', onDirect); socketService.off('user:online', onOnline); socketService.off('user:offline', onOffline); socketService.off('user:typing:indicator', onTyping) }
+  }, [user, currentUserId])
 
-    socketService.on('message:direct:received', (message) => {
-      setDirectMessages(prev => ({
-        ...prev,
-        [message.senderId]: [...(prev[message.senderId] || []), message]
-      }));
-    });
+  const selectMember = async member => {
+    setSelectedUser(member); setError('')
+    const memberId = idOf(member)
+    if (directMessages[memberId]) return
+    try { const result = await apiClient.getDirectMessages(memberId); setDirectMessages(current => ({ ...current, [memberId]: result.messages || [] })) }
+    catch (err) { setError(err.error || err.message || 'Could not load this conversation.') }
+  }
 
-    socketService.on('user:online', (data) => {
-      setOnlineUsers(prev => new Set([...prev, data.userId]));
-    });
+  const send = async event => {
+    event.preventDefault()
+    const content = messageContent.trim()
+    if (!content || sending || (activeMode === 'direct' && !selectedUser)) return
+    setSending(true); setError('')
+    try {
+      if (activeMode === 'team') { const { message } = await apiClient.sendTeamMessage(PROJECT_ID, content); setTeamMessages(items => mergeMessage(items, message)) }
+      else { const memberId = idOf(selectedUser); const { message } = await apiClient.sendDirectMessage(memberId, content); setDirectMessages(current => ({ ...current, [memberId]: mergeMessage(current[memberId] || [], message) })) }
+      setMessageContent('')
+    } catch (err) { setError(err.error || err.message || 'Message could not be sent.') }
+    finally { setSending(false) }
+  }
 
-    socketService.on('user:offline', (data) => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(data.userId);
-        return newSet;
-      });
-    });
-
-    socketService.on('user:typing:indicator', (data) => {
-      setTypingUser(data.username);
-      setTimeout(() => setTypingUser(null), 3000);
-    });
-
-    return () => {
-      socketService.off('message:team:received', null);
-      socketService.off('message:direct:received', null);
-      socketService.off('user:online', null);
-      socketService.off('user:offline', null);
-    };
-  }, []);
-
-  const handleSendTeamMessage = (e) => {
-    e.preventDefault();
-    if (!messageContent.trim()) return;
-
-    socketService.sendTeamMessage(user?.id || 1, user?.username || 'User', 1, messageContent);
-
-    // Add to local state immediately
-    setTeamMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      userId: user?.id || 1,
-      username: user?.username || 'User',
-      content: messageContent,
-      timestamp: new Date().toISOString()
-    }]);
-
-    setMessageContent('');
-  };
-
-  const handleSendDirectMessage = (e) => {
-    e.preventDefault();
-    if (!messageContent.trim() || !selectedUser) return;
-
-    socketService.sendDirectMessage(
-      user?.id || 1,
-      user?.username || 'User',
-      selectedUser.id,
-      messageContent
-    );
-
-    // Add to local state immediately
-    setDirectMessages(prev => ({
-      ...prev,
-      [selectedUser.id]: [...(prev[selectedUser.id] || []), {
-        id: Date.now().toString(),
-        senderId: user?.id || 1,
-        senderUsername: user?.username || 'User',
-        receiverId: selectedUser.id,
-        content: messageContent,
-        timestamp: new Date().toISOString()
-      }]
-    }));
-
-    setMessageContent('');
-  };
-
-  return (
-    <div className={styles.chatContainer}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h1>💬 Messages</h1>
-          <p className={styles.subtitle}>Team Chat & Direct Messages</p>
-        </div>
-        <button className={styles.backBtn} onClick={goToDashboard}>
-          ← Back to Dashboard
-        </button>
-      </header>
-
-      {/* Main Content */}
-      <main className={styles.main}>
-        {activeMode === 'team' ? (
-          // Team Chat Mode
-          <div className={styles.teamChat}>
-            <div className={styles.chatTop}>
-              <h2>📢 Team Chat</h2>
-              <p className={styles.modeInfo}>Communication with entire team</p>
-            </div>
-
-            <div className={styles.messageListContainer}>
-              <div className={styles.messageList}>
-                {teamMessages.length === 0 ? (
-                  <div className={styles.emptyState}>
-                    <p>No messages yet. Start the conversation! 👋</p>
-                  </div>
-                ) : (
-                  teamMessages.map(msg => (
-                    <div key={msg.id} className={`${styles.message} ${msg.userId == (user?.id || 1) ? styles.ownMessage : ''}`}>
-                      <div className={styles.messageHeader}>
-                        <strong className={styles.sender}>{msg.username}</strong>
-                        <span className={styles.time}>
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <div className={styles.messageBody}>{msg.content}</div>
-                    </div>
-                  ))
-                )}
-                {typingUser && <div className={styles.typingIndicator}>✋ {typingUser} is typing...</div>}
-              </div>
-            </div>
-
-            <form onSubmit={handleSendTeamMessage} className={styles.messageForm}>
-              <input
-                type="text"
-                placeholder="Type a message to the team..."
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                className={styles.messageInput}
-                autoFocus
-              />
-              <button type="submit" className={styles.sendBtn} disabled={!messageContent.trim()}>
-                Send
-              </button>
-            </form>
-          </div>
-        ) : (
-          // Direct Messages Mode
-          <div className={styles.directMessagesContainer}>
-            {/* Users List */}
-            <div className={styles.usersSidebar}>
-              <h2>👥 Direct Messages</h2>
-              <div className={styles.usersList}>
-                {allUsers.filter(u => u.id !== (user?.id || 1)).map(teamUser => (
-                  <div
-                    key={teamUser.id}
-                    className={`${styles.userOption} ${selectedUser?.id === teamUser.id ? styles.selected : ''}`}
-                    onClick={() => setSelectedUser(teamUser)}
-                  >
-                    <div className={styles.userIcon}>
-                      <div className={`${styles.statusDot} ${onlineUsers.has(teamUser.id) ? styles.online : styles.offline}`}></div>
-                      {teamUser.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className={styles.userInfo}>
-                      <p className={styles.userName}>{teamUser.username}</p>
-                      <p className={styles.userStatus}>
-                        {onlineUsers.has(teamUser.id) ? '🟢 Online' : '⚪ Away'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Chat Area */}
-            <div className={styles.chatArea}>
-              {selectedUser ? (
-                <>
-                  {/* Chat Header */}
-                  <div className={styles.chatAreaHeader}>
-                    <div className={styles.headerInfo}>
-                      <h2>{selectedUser.username}</h2>
-                      <span className={`${styles.onlineStatus} ${onlineUsers.has(selectedUser.id) ? styles.online : styles.offline}`}>
-                        {onlineUsers.has(selectedUser.id) ? '🟢 Online' : '⚪ Offline'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Messages */}
-                  <div className={styles.messageListContainer}>
-                    <div className={styles.messageList}>
-                      {(!directMessages[selectedUser.id] || directMessages[selectedUser.id].length === 0) ? (
-                        <div className={styles.emptyState}>
-                          <p>No messages with {selectedUser.username} yet. Say hello! 👋</p>
-                        </div>
-                      ) : (
-                        directMessages[selectedUser.id].map(msg => (
-                          <div key={msg.id} className={`${styles.message} ${msg.senderId == (user?.id || 1) ? styles.ownMessage : ''}`}>
-                            <div className={styles.messageHeader}>
-                              <strong className={styles.sender}>{msg.senderUsername}</strong>
-                              <span className={styles.time}>
-                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                            <div className={styles.messageBody}>{msg.content}</div>
-                          </div>
-                        ))
-                      )}
-                      {typingUser && <div className={styles.typingIndicator}>✋ {typingUser} is typing...</div>}
-                    </div>
-                  </div>
-
-                  {/* Message Input */}
-                  <form onSubmit={handleSendDirectMessage} className={styles.messageForm}>
-                    <input
-                      type="text"
-                      placeholder={`Message ${selectedUser.username}...`}
-                      value={messageContent}
-                      onChange={(e) => setMessageContent(e.target.value)}
-                      className={styles.messageInput}
-                    />
-                    <button type="submit" className={styles.sendBtn} disabled={!messageContent.trim()}>
-                      Send
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <div className={styles.emptyState}>
-                  <p>Select a team member to start chatting</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Mode Toggle */}
-      <div className={styles.modeToggle}>
-        <button
-          className={`${styles.modeBtn} ${activeMode === 'team' ? styles.active : ''}`}
-          onClick={() => setActiveMode('team')}
-        >
-          📢 Team Chat
-        </button>
-        <button
-          className={`${styles.modeBtn} ${activeMode === 'direct' ? styles.active : ''}`}
-          onClick={() => setActiveMode('direct')}
-        >
-          ✉️ Direct Messages
-        </button>
-      </div>
-    </div>
-  );
+  const messages = selectedUser ? directMessages[idOf(selectedUser)] || [] : []
+  return <div className={styles.chatContainer}>
+    <header className={styles.header}><div className={styles.headerLeft}><h1>Messages</h1><p className={styles.subtitle}>Team chat and private conversations</p></div><button className={styles.backBtn} onClick={goToDashboard}>← Back to Dashboard</button></header>
+    <main className={styles.main}>{error && <div className={styles.chatError} role="alert">{error}</div>}{activeMode === 'team' ? <div className={styles.teamChat}><div className={styles.chatTop}><h2>Team chat</h2><p className={styles.modeInfo}>Visible to everyone in this workspace</p></div><MessageList messages={teamMessages} userId={currentUserId} loading={loading} typingUser={typingUser}/><MessageForm value={messageContent} setValue={setMessageContent} onSubmit={send} sending={sending} placeholder="Message the whole team…" user={user}/></div> : <div className={styles.directMessagesContainer}>
+      <aside className={styles.usersSidebar}><h2>Direct messages</h2><div className={styles.usersList}>{members.map(member => <button type="button" key={idOf(member)} className={`${styles.userOption} ${idOf(selectedUser) === idOf(member) ? styles.selected : ''}`} onClick={() => selectMember(member)}><span className={styles.userIcon}><i className={`${styles.statusDot} ${onlineUsers.has(idOf(member)) ? styles.online : styles.offline}`}/>{member.username.charAt(0).toUpperCase()}</span><span className={styles.userInfo}><span className={styles.userName}>{member.username}</span><span className={styles.userStatus}>{onlineUsers.has(idOf(member)) ? 'Online' : 'Offline'}</span></span></button>)}</div></aside>
+      <section className={styles.chatArea}>{selectedUser ? <><div className={styles.chatAreaHeader}><div className={styles.headerInfo}><h2>{selectedUser.username}</h2><span className={`${styles.onlineStatus} ${onlineUsers.has(idOf(selectedUser)) ? styles.online : styles.offline}`}>{onlineUsers.has(idOf(selectedUser)) ? 'Online' : 'Offline'}</span></div></div><MessageList messages={messages} userId={currentUserId} typingUser={typingUser}/><MessageForm value={messageContent} setValue={setMessageContent} onSubmit={send} sending={sending} placeholder={`Message ${selectedUser.username}…`} user={user}/></> : <div className={styles.emptyState}><p>Select a team member to start a private conversation.</p></div>}</section>
+    </div>}</main>
+    <div className={styles.modeToggle}><button className={`${styles.modeBtn} ${activeMode === 'team' ? styles.active : ''}`} onClick={() => setActiveMode('team')}>Team chat</button><button className={`${styles.modeBtn} ${activeMode === 'direct' ? styles.active : ''}`} onClick={() => setActiveMode('direct')}>Direct messages</button></div>
+  </div>
 }
+
+function MessageList({ messages, userId, loading, typingUser }) { return <div className={styles.messageListContainer}><div className={styles.messageList}>{loading ? <div className={styles.emptyState}>Loading messages…</div> : messages.length === 0 ? <div className={styles.emptyState}><p>No messages yet. Start the conversation.</p></div> : messages.map(message => <article key={idOf(message)} className={`${styles.message} ${senderIdOf(message) === userId ? styles.ownMessage : ''}`}><div className={styles.messageHeader}><strong className={styles.sender}>{senderOf(message)}</strong><time className={styles.time}>{timeOf(message) ? new Date(timeOf(message)).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}</time></div><div className={styles.messageBody}>{message.content}</div></article>)}{typingUser && <div className={styles.typingIndicator}>{typingUser} is typing…</div>}</div></div> }
+function MessageForm({ value, setValue, onSubmit, sending, placeholder, user }) { return <form onSubmit={onSubmit} className={styles.messageForm}><input maxLength="2000" type="text" placeholder={placeholder} value={value} onChange={event => { setValue(event.target.value); socketService.emitTyping(user.id, user.username, PROJECT_ID) }} className={styles.messageInput}/><button type="submit" className={styles.sendBtn} disabled={!value.trim() || sending}>{sending ? 'Sending…' : 'Send'}</button></form> }

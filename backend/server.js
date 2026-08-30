@@ -3,6 +3,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 import { connectDatabase, closeDatabase } from './config/database.js';
 
 // Import routes
@@ -10,20 +11,23 @@ import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import messageRoutes from './routes/messages.js';
 
-dotenv.config();
+dotenv.config({ path: fileURLToPath(new URL('.env', import.meta.url)) });
 
 const app = express();
 const httpServer = createServer(app);
+const configuredOrigins = (process.env.SOCKET_IO_CORS || 'http://localhost:54995').split(',').map(origin => origin.trim());
+const isAllowedOrigin = (origin) => !origin || configuredOrigins.includes(origin) || /^http:\/\/(?:(?:10(?:\.\d{1,3}){3})|(?:192\.168(?:\.\d{1,3}){2})|(?:172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})):54995$/.test(origin);
+const corsOrigin = (origin, callback) => callback(null, isAllowedOrigin(origin));
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.SOCKET_IO_CORS || 'http://localhost:5173',
+    origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: process.env.SOCKET_IO_CORS || 'http://localhost:5173',
+  origin: corsOrigin,
   credentials: true
 }));
 app.use(express.json());
@@ -31,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: '✅ ProBoard Backend is running', timestamp: new Date().toISOString() });
+  res.json({ status: '✅ NovaSync Backend is running', timestamp: new Date().toISOString() });
 });
 
 // API Routes
@@ -42,6 +46,11 @@ app.use('/api/messages', messageRoutes);
 // Socket.IO Connection Handling
 const connectedUsers = new Map(); // { userId: socketId }
 const userSockets = new Map(); // { socketId: userId }
+app.set('io', io);
+app.set('sendDirectMessage', (receiverId, message) => {
+  const recipientSocketId = connectedUsers.get(String(receiverId));
+  if (recipientSocketId) io.to(recipientSocketId).emit('message:direct:received', message);
+});
 
 io.on('connection', (socket) => {
   console.log('👤 New user connected:', socket.id);
@@ -49,8 +58,8 @@ io.on('connection', (socket) => {
   // User joins (register their socket connection)
   socket.on('user:join', (data) => {
     const { userId, username } = data;
-    connectedUsers.set(userId, socket.id);
-    userSockets.set(socket.id, userId);
+    connectedUsers.set(String(userId), socket.id);
+    userSockets.set(socket.id, String(userId));
 
     console.log(`✅ ${username} (${userId}) joined`);
 
@@ -164,7 +173,7 @@ async function startServer() {
 
     // Start HTTP server
     httpServer.listen(PORT, () => {
-      console.log(`\n🚀 ProBoard Backend Server running on port ${PORT}`);
+      console.log(`\n🚀 NovaSync Backend Server running on port ${PORT}`);
       console.log(`📡 Socket.IO listening for real-time events`);
       console.log(`🌐 CORS origin: ${process.env.SOCKET_IO_CORS || 'http://localhost:5173'}\n`);
     });
