@@ -14,6 +14,7 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
     priority: 'Medium',
     type: 'Feature',
     dueDate: '',
+    labels: '', progress: '0', subtasks: '', relationship: '', relatedTaskId: '',
     columnId: selectedColumn?.id || (columns[0]?.id || '')
   })
 
@@ -51,6 +52,9 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
         priority: editingTask.priority || 'Medium',
         type: editingTask.type || 'Feature',
         dueDate: editingTask.dueDate || '',
+        labels: (editingTask.labels || []).join(', '), progress: String(editingTask.progress || 0),
+        subtasks: (editingTask.subtasks || []).map(item => item.title).join('\n'),
+        relationship: editingTask.relationship || '', relatedTaskId: editingTask.relatedTaskId || '',
         columnId: editingTask.columnId || selectedColumn?.id || (columns[0]?.id || '')
       })
     } else {
@@ -62,6 +66,7 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
         priority: 'Medium',
         type: 'Feature',
         dueDate: '',
+        labels: '', progress: '0', subtasks: '', relationship: '', relatedTaskId: '',
         columnId: selectedColumn?.id || (columns[0]?.id || '')
       })
     }
@@ -117,6 +122,10 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
       priority: formData.priority,
       type: formData.type,
       dueDate: formData.dueDate,
+      labels: formData.labels.split(',').map(label => label.trim()).filter(Boolean).slice(0, 5),
+      progress: Number(formData.progress),
+      subtasks: formData.subtasks.split('\n').map(title => title.trim()).filter(Boolean).map((title, index) => ({ title, completed: editingTask?.subtasks?.[index]?.completed || false })),
+      relationship: formData.relationship, relatedTaskId: formData.relatedTaskId.trim(),
       columnId: formData.columnId
     })
 
@@ -129,6 +138,7 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
       priority: 'Medium',
       type: 'Feature',
       dueDate: '',
+      labels: '', progress: '0', subtasks: '', relationship: '', relatedTaskId: '',
       columnId: selectedColumn?.id || (columns[0]?.id || '')
     })
     setErrors({})
@@ -260,6 +270,26 @@ export default function TaskForm({ columns, selectedColumn, onSubmit, onCancel, 
           ))}
         </select>
         {errors.columnId && <p className={styles.errorMsg}>{errors.columnId}</p>}
+      </div>
+
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="labels">Labels</label>
+        <input id="labels" name="labels" value={formData.labels} onChange={handleChange} className={styles.input} placeholder="frontend, launch, customer" />
+      </div>
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="progress">Progress: {formData.progress}%</label>
+        <input id="progress" type="range" min="0" max="100" step="10" name="progress" value={formData.progress} onChange={handleChange} className={styles.input} />
+      </div>
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="subtasks">Subtasks</label>
+        <textarea id="subtasks" name="subtasks" value={formData.subtasks} onChange={handleChange} className={styles.input} rows="3" placeholder="One subtask per line" />
+      </div>
+      <div className={styles.group}>
+        <label className={styles.label} htmlFor="relationship">Task relationship</label>
+        <select id="relationship" name="relationship" value={formData.relationship} onChange={handleChange} className={`${styles.input} ${styles.select}`}>
+          <option value="">No relationship</option><option value="blocks">Blocks</option><option value="depends-on">Depends on</option><option value="related-to">Related to</option><option value="duplicate-of">Duplicate of</option>
+        </select>
+        {formData.relationship && <input name="relatedTaskId" value={formData.relatedTaskId} onChange={handleChange} className={styles.input} placeholder="Related task ID" />}
       </div>
 
       <div className={styles.actions}>

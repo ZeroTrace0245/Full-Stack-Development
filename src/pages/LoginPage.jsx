@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const update = (key, value) => { setForm(current => ({ ...current, [key]: value })); setError('') }
   const switchMode = () => { setMode(current => current === 'login' ? 'register' : 'login'); setError(''); setShowPassword(false) }
+  const useDemo = () => { setForm(current => ({ ...current, email: 'demo', password: 'Demo@123' })); setError(''); setShowPassword(true) }
   const submit = async event => {
     event.preventDefault()
     if (!form.email.trim() || !form.password || (mode === 'register' && !form.username.trim())) return setError('Please complete all required fields.')
@@ -50,6 +51,7 @@ export default function LoginPage() {
       <div className={styles.authCard}>
         <div className={styles.heading}><span>{mode === 'login' ? 'WELCOME BACK' : 'JOIN NOVASYNC'}</span><h2>{mode === 'login' ? 'Sign in to your workspace' : 'Create your workspace'}</h2><p>{mode === 'login' ? 'Enter your details to continue where you left off.' : 'Start organizing your team and projects in minutes.'}</p></div>
         <div className={styles.modeTabs}><button type="button" className={mode === 'login' ? styles.active : ''} onClick={() => mode !== 'login' && switchMode()}>Sign in</button><button type="button" className={mode === 'register' ? styles.active : ''} onClick={() => mode !== 'register' && switchMode()}>Create account</button></div>
+        {mode === 'login' && import.meta.env.DEV && <button type="button" className={styles.userDemo} onClick={useDemo}><span>✦</span><span><strong>Development member</strong><small>demo · Demo@123</small></span><b>Use credentials</b></button>}
         {mode === 'login' && <button type="button" className={styles.adminDemo} onClick={goToAdminLogin}><span>◆</span><span><strong>Administrator portal</strong><small>Use the separate secure admin sign in</small></span><b>Open portal →</b></button>}
         {error && <div className={styles.error} role="alert"><span>!</span>{error}</div>}
         <form onSubmit={submit}>

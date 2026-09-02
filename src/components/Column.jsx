@@ -12,7 +12,7 @@ function getStatusClass(columnTitle) {
   return ''
 }
 
-export default function Column({ column, onCreateTask, onDeleteTask, onEditTask }) {
+export default function Column({ column, collapsed, onToggle, onCreateTask, onDeleteTask, onEditTask }) {
   const statusClass = getStatusClass(column.title)
   const columnClass = statusClass ? `${styles.column} ${styles[statusClass]}` : styles.column
 
@@ -30,7 +30,8 @@ export default function Column({ column, onCreateTask, onDeleteTask, onEditTask 
   return (
     <div className={columnClass}>
       <div className={styles.headerRow}>
-        <h3 className={styles.header}>{column.title}</h3>
+        <button className={styles.collapseBtn} onClick={onToggle} aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${column.title}`}>{collapsed ? '›' : '⌄'}</button>
+        <h3 className={styles.header}>{column.title} <span>{column.tasks.length}</span></h3>
         <button
           className={styles.addBtn}
           onClick={() => onCreateTask(column)}
@@ -40,7 +41,7 @@ export default function Column({ column, onCreateTask, onDeleteTask, onEditTask 
           +
         </button>
       </div>
-      <div className={styles.tasks} ref={setNodeRef}>
+      {!collapsed && <div className={styles.tasks} ref={setNodeRef}>
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {column.tasks.map((task) => (
             <TaskCard
@@ -56,7 +57,7 @@ export default function Column({ column, onCreateTask, onDeleteTask, onEditTask 
         {column.tasks.length === 0 && (
           <p className={styles.emptyState}>No tasks yet. Click + to add one!</p>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

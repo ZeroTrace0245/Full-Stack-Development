@@ -1,129 +1,19 @@
-import React, { useState } from 'react'
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
+import React, { useMemo, useState } from 'react'
+import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import Column from './Column'
-import TaskCard from './TaskCard'
-import { useBoard } from '../context/BoardContext'
-import { useAuth } from '../context/AuthContext'
-import styles from './Board.module.css'
-
+import Column from './Column'; import TaskCard from './TaskCard'; import { useBoard } from '../context/BoardContext'; import { useAuth } from '../context/AuthContext'; import styles from './Board.module.css'
+const isDone = title => /done|complete|deployed|production/i.test(title)
+const scoreTask = task => ({ High:50, Medium:30, Low:10 }[task.priority]||20)+(task.dueDate?Math.max(0,30-Math.ceil((new Date(task.dueDate)-new Date())/86400000)*3):0)+(task.relationship==='blocks'?20:0)
 export default function Board({ onCreateTask, onDeleteTask, onEditTask }) {
-  const { board, handleMoveTask } = useBoard()
-  const { user } = useAuth()
-  const [activeTask, setActiveTask] = useState(null)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
-
-  const handleDragStart = (event) => {
-    const { active } = event
-    if (active.data.current?.type === 'Task') {
-      setActiveTask(active.data.current.task)
-    }
-  }
-
-  const handleDragOver = (event) => {
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id
-    const overId = over.id
-    if (activeId === overId) return
-
-    const isActiveTask = active.data.current?.type === 'Task'
-    const isOverTask = over.data.current?.type === 'Task'
-    const isOverColumn = over.data.current?.type === 'Column'
-
-    if (!isActiveTask) return
-
-    const sourceColId = active.data.current.columnId
-
-    if (isOverTask) {
-      const destColId = over.data.current.columnId
-
-      if (sourceColId !== destColId) {
-        const sourceCol = board.columns.find(c => c.id === sourceColId)
-        const destCol = board.columns.find(c => c.id === destColId)
-        const sourceIndex = sourceCol.tasks.findIndex(t => t.id === activeId)
-        const destIndex = destCol.tasks.findIndex(t => t.id === overId)
-
-        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destIndex, user?.username)
-      }
-    } else if (isOverColumn) {
-      const destColId = overId
-      if (sourceColId !== destColId) {
-        const sourceCol = board.columns.find(c => c.id === sourceColId)
-        const destCol = board.columns.find(c => c.id === destColId)
-        const sourceIndex = sourceCol.tasks.findIndex(t => t.id === activeId)
-
-        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destCol.tasks.length, user?.username)
-      }
-    }
-  }
-
-  const handleDragEnd = (event) => {
-    setActiveTask(null)
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id
-    const overId = over.id
-    if (activeId === overId) return
-
-    const isActiveTask = active.data.current?.type === 'Task'
-    const isOverTask = over.data.current?.type === 'Task'
-
-    if (isActiveTask && isOverTask) {
-      const sourceColId = active.data.current.columnId
-      const destColId = over.data.current.columnId
-
-      if (sourceColId === destColId) {
-        const col = board.columns.find(c => c.id === sourceColId)
-        const sourceIndex = col.tasks.findIndex(t => t.id === activeId)
-        const destIndex = col.tasks.findIndex(t => t.id === overId)
-        handleMoveTask(activeId, sourceColId, destColId, sourceIndex, destIndex, user?.username)
-      }
-    }
-  }
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className={styles.board}>
-        <h2 className={styles.title}>{board.title}</h2>
-        <div className={styles.columns}>
-          {board.columns.map((col) => (
-            <Column
-              key={col.id}
-              column={col}
-              onCreateTask={onCreateTask}
-              onDeleteTask={onDeleteTask}
-              onEditTask={onEditTask}
-            />
-          ))}
-        </div>
-      </div>
-      <DragOverlay>
-        {activeTask ? (
-          <TaskCard task={activeTask} />
-        ) : null}
-      </DragOverlay>
-    </DndContext>
-  )
+ const { board, handleMoveTask }=useBoard(), { user }=useAuth(); const [activeTask,setActiveTask]=useState(null),[query,setQuery]=useState(''),[priority,setPriority]=useState('All'),[assignee,setAssignee]=useState('All'),[focusOpen,setFocusOpen]=useState(false),[collapsed,setCollapsed]=useState([])
+ const sensors=useSensors(useSensor(PointerSensor,{activationConstraint:{distance:5}}),useSensor(KeyboardSensor,{coordinateGetter:sortableKeyboardCoordinates})); const allTasks=board.columns.flatMap(column=>column.tasks.map(task=>({...task,columnTitle:column.title}))); const assignees=[...new Set(allTasks.map(t=>t.assignee).filter(Boolean))]
+ const focusTasks=useMemo(()=>allTasks.filter(t=>!isDone(t.columnTitle)&&(!t.assignee||t.assignee===user?.username)).sort((a,b)=>scoreTask(b)-scoreTask(a)).slice(0,3),[allTasks,user?.username]); const visibleColumns=board.columns.map(column=>({...column,tasks:column.tasks.filter(task=>(!query||`${task.title} ${task.description} ${(task.labels||[]).join(' ')}`.toLowerCase().includes(query.toLowerCase()))&&(priority==='All'||task.priority===priority)&&(assignee==='All'||task.assignee===assignee))}))
+ const moveAcross=({active,over})=>{if(!over||active.id===over.id||active.data.current?.type!=='Task')return;const sourceId=active.data.current.columnId,destId=over.data.current?.type==='Task'?over.data.current.columnId:over.data.current?.type==='Column'?over.id:null;if(!destId||sourceId===destId)return;const source=board.columns.find(c=>c.id===sourceId),dest=board.columns.find(c=>c.id===destId);handleMoveTask(active.id,sourceId,destId,source.tasks.findIndex(t=>t.id===active.id),over.data.current?.type==='Task'?dest.tasks.findIndex(t=>t.id===over.id):dest.tasks.length,user?.username)}
+ const end=({active,over})=>{setActiveTask(null);if(!over||active.id===over.id||active.data.current?.type!=='Task'||over.data.current?.type!=='Task')return;const sourceId=active.data.current.columnId,destId=over.data.current.columnId;if(sourceId===destId){const col=board.columns.find(c=>c.id===sourceId);handleMoveTask(active.id,sourceId,destId,col.tasks.findIndex(t=>t.id===active.id),col.tasks.findIndex(t=>t.id===over.id),user?.username)}}
+ return <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={({active})=>active.data.current?.type==='Task'&&setActiveTask(active.data.current.task)} onDragOver={moveAcross} onDragEnd={end}><div className={styles.board}>
+  <div className={styles.boardHeader}><div><span className={styles.eyebrow}>SPRINT WORKSPACE</span><h1>{board.title}</h1><p>{allTasks.length} tasks · {allTasks.filter(t=>isDone(t.columnTitle)).length} completed</p></div><div className={styles.headerActions}><button className={styles.focusBtn} onClick={()=>setFocusOpen(!focusOpen)}>◎ Focus mode</button><button className={styles.primaryBtn} onClick={()=>onCreateTask(board.columns[0])}>＋ New task</button></div></div>
+  <div className={styles.toolbar}><label className={styles.search}>⌕<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search tasks, labels…" /></label><select value={priority} onChange={e=>setPriority(e.target.value)}><option>All</option><option>High</option><option>Medium</option><option>Low</option></select><select value={assignee} onChange={e=>setAssignee(e.target.value)}><option>All</option>{assignees.map(name=><option key={name}>{name}</option>)}</select><button onClick={()=>{setQuery('');setPriority('All');setAssignee('All')}}>Clear filters</button></div>
+  {focusOpen&&<section className={styles.focusPanel}><div><span>PERSONAL FOCUS</span><h2>Your next best move</h2><p>Ranked by urgency, priority and blockers.</p></div><div className={styles.focusList}>{focusTasks.length?focusTasks.map((task,index)=><button key={task.id} onClick={()=>onEditTask(task,board.columns.find(c=>c.id===task.columnId))}><b>{index+1}</b><span><strong>{task.title}</strong><small>{task.priority} priority · {task.estimate||0}h</small></span><i>{scoreTask(task)}</i></button>):<p>You’re all caught up.</p>}</div></section>}
+  <div className={styles.columns}>{visibleColumns.map(col=><Column key={col.id} column={col} collapsed={collapsed.includes(col.id)} onToggle={()=>setCollapsed(items=>items.includes(col.id)?items.filter(id=>id!==col.id):[...items,col.id])} onCreateTask={onCreateTask} onDeleteTask={onDeleteTask} onEditTask={onEditTask}/>)}</div>
+ </div><DragOverlay>{activeTask?<TaskCard task={activeTask}/>:null}</DragOverlay></DndContext>
 }
-

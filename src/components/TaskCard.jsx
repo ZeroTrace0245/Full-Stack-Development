@@ -32,11 +32,9 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
     boxShadow: isDragging ? '0 10px 20px rgba(0,0,0,0.1)' : undefined
   }
 
-  const priorityBadge = {
-    High: '🔴',
-    Medium: '🟡',
-    Low: '🟢'
-  }
+  const priorityBadge = { High: '●', Medium: '●', Low: '●' }
+  const dueDays = task.dueDate ? Math.ceil((new Date(task.dueDate) - new Date(new Date().toDateString())) / 86400000) : null
+  const subtaskDone = (task.subtasks || []).filter(item => item.completed).length
 
   return (
     <div
@@ -54,12 +52,17 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
         </div>
         <h4 className={styles.title}>{task.title}</h4>
         {task.description && <p className={styles.description}>{task.description}</p>}
-        {task.dueDate && <div className={styles.dueDate}>📅 {task.dueDate}</div>}
+        {(task.labels || []).length > 0 && <div className={styles.labels}>{task.labels.map(label => <span key={label}>#{label}</span>)}</div>}
+        {task.relationship && <div className={styles.relationship}>↗ {task.relationship.replace('-', ' ')} {task.relatedTaskId || 'another task'}</div>}
+        {task.dueDate && <div className={`${styles.dueDate} ${dueDays < 0 ? styles.overdue : dueDays <= 3 ? styles.dueSoon : ''}`}>◷ {dueDays < 0 ? `${Math.abs(dueDays)}d overdue` : dueDays === 0 ? 'Due today' : task.dueDate}</div>}
+        {(task.progress > 0 || task.subtasks?.length > 0) && <div className={styles.progress}><i style={{width:`${task.progress || (subtaskDone / task.subtasks.length * 100)}%`}}/><span>{task.progress || Math.round(subtaskDone / task.subtasks.length * 100)}%</span></div>}
         <div className={styles.meta}>
           <div className={styles.avatar} title={task.assignee}>
             {getUserInitials(task.assignee)}
           </div>
           <span>{task.estimate}h</span>
+          {task.subtasks?.length > 0 && <span>☑ {subtaskDone}/{task.subtasks.length}</span>}
+          {task.comments?.length > 0 && <span>◌ {task.comments.length}</span>}
         </div>
       </div>
 

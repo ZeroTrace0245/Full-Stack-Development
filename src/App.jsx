@@ -14,6 +14,7 @@ import Chat from './pages/Chat'
 import WorkspaceNav from './components/WorkspaceNav'
 import AdminPanel from './pages/AdminPanel'
 import AdminLoginPage from './pages/AdminLoginPage'
+import UserSettings from './pages/UserSettings'
 import styles from './App.module.css'
 
 function WorkspacePage({ children }) {
@@ -101,21 +102,11 @@ function AppContent() {
     return <WorkspacePage><AdminPanel /></WorkspacePage>
   }
 
+  if (currentPage === 'settings') return <WorkspacePage><UserSettings /></WorkspacePage>
+
   return (
     <WorkspacePage><div className={styles.app}>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-                  <h1>NovaSync</h1>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <button className={styles.activityToggle} onClick={() => setShowActivity(s => !s)} aria-pressed={showActivity}>
-              Activity
-            </button>
-            <button className={styles.backBtn} onClick={goToDashboard}>
-              ← Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      <button className={styles.activityToggle} onClick={() => setShowActivity(s => !s)} aria-pressed={showActivity}>◴ Activity</button>
       <main className={styles.main}>
         <Board
           onCreateTask={handleCreateTaskClick}

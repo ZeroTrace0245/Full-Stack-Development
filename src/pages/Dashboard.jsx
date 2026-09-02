@@ -13,11 +13,12 @@ const paths = {
   arrow: <><path d="M5 12h14M13 6l6 6-6 6"/></>, check: <path d="M20 6L9 17l-5-5"/>,
   clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
   layers: <><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></>, plus: <path d="M12 5v14M5 12h14"/>,
+  settings: <><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A7 7 0 0 0 15 6l-.3-2.6h-4L10.4 6A7 7 0 0 0 8 7.1l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1A7 7 0 0 0 10.4 18l.3 2.6h4L15 18a7 7 0 0 0 1.5-1.1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1z"/></>,
 }
 function Icon({ name, size = 20 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg> }
 
 export default function Dashboard() {
-  const { user, logout, goToBoard, goToTeam, goToReports, goToChat, goToAdmin } = useAuth()
+  const { user, logout, goToBoard, goToTeam, goToReports, goToChat, goToAdmin, goToSettings } = useAuth()
   const { board } = useBoard()
   const columns = board?.columns || []
   const total = columns.reduce((sum, col) => sum + col.tasks.length, 0)
@@ -38,7 +39,7 @@ export default function Dashboard() {
   }
   const resetTilt = event => { event.currentTarget.style.setProperty('--rx', '0deg'); event.currentTarget.style.setProperty('--ry', '0deg') }
   const mouseGlow = event => { const r = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty('--mouse-x', `${event.clientX-r.left}px`); event.currentTarget.style.setProperty('--mouse-y', `${event.clientY-r.top}px`) }
-  const nav = [['grid','Overview',null,true],['board','My board',goToBoard],['users','Team',goToTeam],['message','Messages',goToChat],...(user?.role === 'Admin' ? [['chart','Reports',goToReports],['users','Admin',goToAdmin]] : [])]
+  const nav = [['grid','Overview',null,true],['board','My board',goToBoard],['users','Team',goToTeam],['message','Messages',goToChat],...(user?.role === 'Admin' ? [['chart','Reports',goToReports],['users','Admin',goToAdmin]] : []),['settings','Settings',goToSettings]]
   const stats = [
     {label:'Total tasks',value:total,note:'Across this sprint',icon:'layers',tone:'violet'},
     {label:'In progress',value:doing,note:'Currently moving',icon:'clock',tone:'orange'},
@@ -48,7 +49,7 @@ export default function Dashboard() {
     <aside className={styles.sidebar}>
       <div className={styles.brand}><span className={styles.brandMark}><i/><i/><i/></span><span>Nova<b>Sync</b></span></div>
       <nav className={styles.nav} aria-label="Main navigation"><p>Workspace</p>{nav.map(([icon,label,action,active]) => <button key={label} className={active?styles.navActive:''} onClick={action||undefined}><Icon name={icon}/><span>{label}</span>{label==='Messages'&&<i>3</i>}</button>)}</nav>
-      <div className={styles.sidebarBottom}><div className={styles.sideProfile}><span className={styles.avatar}>{initials}</span><span><strong>{user?.username}</strong><small>{user?.role||'Member'}</small></span></div><button className={styles.logout} onClick={logout}><Icon name="logout"/><span>Sign out</span></button></div>
+      <div className={styles.sidebarBottom}><button className={styles.sideProfile} onClick={goToSettings}>{user?.avatar?<img className={styles.avatar} src={user.avatar} alt=""/>:<span className={styles.avatar}>{initials}</span>}<span><strong>{user?.username}</strong><small>{user?.role||'Member'}</small></span></button><button className={styles.logout} onClick={logout}><Icon name="logout"/><span>Sign out</span></button></div>
     </aside>
     <main className={styles.main}>
       <header className={styles.topbar}><div><p>{today}</p><h1>Good to see you, {firstName}.</h1></div><button className={styles.newTask} onClick={goToBoard}><Icon name="plus" size={18}/> New task</button></header>

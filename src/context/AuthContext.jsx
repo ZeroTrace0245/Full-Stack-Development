@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState('login')
+  useEffect(() => { const theme = user?.preferences?.theme || localStorage.getItem('novasync-theme') || 'dark'; document.documentElement.dataset.theme = theme; localStorage.setItem('novasync-theme', theme) }, [user])
 
   const finishLogin = useCallback((result, remember = true) => {
     apiClient.setToken(result.token, remember)
@@ -80,6 +81,8 @@ export function AuthProvider({ children }) {
   const goToAdmin = () => {
     setCurrentPage('admin')
   }
+  const goToSettings = () => setCurrentPage('settings')
+  const updateProfile = async profile => { const result = await apiClient.updateProfile(profile); setUser(result.user); return result }
 
   const goToAdminLogin = () => setCurrentPage('admin-login')
   const goToLogin = () => setCurrentPage('login')
@@ -99,6 +102,8 @@ export function AuthProvider({ children }) {
       goToReports,
       goToChat
       ,goToAdmin
+      ,goToSettings,
+      updateProfile
       ,goToAdminLogin,
       goToLogin
   }), [user, isLoading, currentPage, login, register, logout])

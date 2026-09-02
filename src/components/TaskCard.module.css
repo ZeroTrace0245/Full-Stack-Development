@@ -39,8 +39,9 @@
 }
 
 .description {
-  display: none; /* compact layout hides descriptions by default */
+  display: -webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:1px 0 3px;color:#8d98a5;line-height:1.45;
 }
+.labels{display:flex;gap:5px;flex-wrap:wrap}.labels span{font-size:9px;color:#9cb2cd;background:#607fa91c;border:1px solid #718ead2e;padding:3px 6px;border-radius:6px}.relationship{font-size:10px;color:#aa9bc2;text-transform:capitalize}.overdue{color:#f08378!important}.dueSoon{color:#efb56f!important}.progress{height:5px;border-radius:4px;background:#ffffff0c;position:relative;margin:4px 0 1px}.progress i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#6585ab,#8fa8c7)}.progress span{position:absolute;right:0;top:-16px;color:#748291;font-size:9px}
 
 .dueDate {
   font-size: 11px;

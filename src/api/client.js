@@ -91,6 +91,7 @@ class APIClient {
       throw error.response?.data || error;
     }
   }
+  async updateProfile(profile) { try { return (await axios.put(`${API_BASE_URL}/auth/me`, profile, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
 
   async updateUserRole(userId, role) {
     try {
