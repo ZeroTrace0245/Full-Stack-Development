@@ -48,6 +48,25 @@ router.post('/login', [body('identifier').trim().notEmpty(), body('password').no
 })
 
 router.get('/me', authMiddleware, async (req, res, next) => { try { if (useMockData()) { const user = mockStore.users.find((item) => item.id === req.user.userId); if (!user) return res.status(404).json({ error: 'User not found' }); const { passwordHash: _passwordHash, ...safeUser } = user; return res.json({ user: safeUser }) } const user = await User.findById(req.user.userId); if (!user) return res.status(404).json({ error: 'User not found' }); res.json({ user }) } catch (error) { next(error) } })
+router.put('/me', authMiddleware, [body('username').trim().notEmpty(), body('email').isEmail().normalizeEmail(), validate], async (req, res, next) => {
+  try {
+    const { username, email, bio = '', timezone = 'Asia/Colombo', avatar = '', preferences = {}, currentPassword, newPassword } = req.body
+    if (avatar && (!avatar.startsWith('data:image/') || avatar.length > 1400000)) return res.status(400).json({ error: 'Profile photo must be an image smaller than 1 MB.' })
+    if (bio.length > 160) return res.status(400).json({ error: 'Bio must be 160 characters or fewer.' })
+    if (newPassword && newPassword.length < 6) return res.status(400).json({ error: 'New password must contain at least 6 characters.' })
+    if (useMockData()) {
+      const user = mockStore.users.find(item => item.id === req.user.userId); if (!user) return res.status(404).json({ error: 'User not found' })
+      if (mockStore.users.some(item => item.id !== user.id && (item.username === username || item.email === email))) return res.status(409).json({ error: 'Username or email is already in use.' })
+      if (newPassword && (!currentPassword || !(await bcryptjs.compare(currentPassword, user.passwordHash)))) return res.status(401).json({ error: 'Current password is incorrect.' })
+      Object.assign(user, { username, email, bio, timezone, avatar, preferences: { emailNotifications: preferences.emailNotifications !== false, compactMode: Boolean(preferences.compactMode), theme: preferences.theme === 'light' ? 'light' : 'dark' } })
+      if (newPassword) user.passwordHash = await bcryptjs.hash(newPassword, 10); persistStore(); const { passwordHash: _passwordHash, ...safeUser } = user; return res.json({ message: 'Profile updated', user: safeUser })
+    }
+    const duplicate = await User.findOne({ _id: { $ne: req.user.userId }, $or: [{ username }, { email }] }); if (duplicate) return res.status(409).json({ error: 'Username or email is already in use.' })
+    const user = await User.findById(req.user.userId).select('+passwordHash'); if (!user) return res.status(404).json({ error: 'User not found' })
+    if (newPassword && (!currentPassword || !(await bcryptjs.compare(currentPassword, user.passwordHash)))) return res.status(401).json({ error: 'Current password is incorrect.' })
+    Object.assign(user, { username, email, bio, timezone, avatar, preferences }); if (newPassword) user.passwordHash = await bcryptjs.hash(newPassword, 10); await user.save(); res.json({ message: 'Profile updated', user: user.toJSON() })
+  } catch (error) { next(error) }
+})
 router.get('/users', authMiddleware, async (_req, res, next) => { try { if (useMockData()) return res.json({ users: mockStore.users.map(({ passwordHash: _passwordHash, ...user }) => user) }); res.json({ users: await User.find().sort({ username: 1 }) }) } catch (error) { next(error) } })
 
 router.patch('/users/:id/role', authMiddleware, adminMiddleware, [body('role').isIn(['Admin', 'Standard User']), validate], async (req, res, next) => {
