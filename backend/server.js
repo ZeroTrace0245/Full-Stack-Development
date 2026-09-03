@@ -10,6 +10,8 @@ import { connectDatabase, closeDatabase } from './config/database.js';
 import authRoutes from './routes/auth.js';
 import taskRoutes from './routes/tasks.js';
 import messageRoutes from './routes/messages.js';
+import notificationRoutes from './routes/notifications.js';
+import mongoose from 'mongoose';
 
 dotenv.config({ path: fileURLToPath(new URL('.env', import.meta.url)) });
 
@@ -35,13 +37,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: '✅ NovaSync Backend is running', timestamp: new Date().toISOString() });
+  const atlasConfigured = Boolean(process.env.MONGODB_URI?.trim());
+  res.json({ status: '✅ NovaSync Backend is running', atlas: { configured: atlasConfigured, connected: atlasConfigured && mongoose.connection.readyState === 1 }, timestamp: new Date().toISOString() });
 });
 
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Socket.IO Connection Handling
 const connectedUsers = new Map(); // { userId: socketId }
@@ -166,21 +170,14 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-async function startServer() {
-  try {
-    // Connect to database
-    await connectDatabase();
-
-    // Start HTTP server
-    httpServer.listen(PORT, () => {
-      console.log(`\n🚀 NovaSync Backend Server running on port ${PORT}`);
-      console.log(`📡 Socket.IO listening for real-time events`);
-      console.log(`🌐 CORS origin: ${process.env.SOCKET_IO_CORS || 'http://localhost:5173'}\n`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
+function startServer() {
+  // Local-first routes should be available immediately; Atlas connects in the background.
+  httpServer.listen(PORT, () => {
+    console.log(`\n🚀 NovaSync Backend Server running on port ${PORT}`);
+    console.log(`📡 Socket.IO listening for real-time events`);
+    console.log(`🌐 CORS origin: ${process.env.SOCKET_IO_CORS || 'http://localhost:5173'}\n`);
+  });
+  void connectDatabase().catch(error => console.error('Database initialization failed:', error));
 }
 
 // Graceful shutdown

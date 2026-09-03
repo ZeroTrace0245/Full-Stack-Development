@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ['Admin', 'Standard User'], default: 'Standard User' },
+  avatar: { type: String, default: '' },
+  bio: { type: String, default: '', maxlength: 160 },
+  timezone: { type: String, default: 'Asia/Colombo' },
+  preferences: { emailNotifications: { type: Boolean, default: true }, compactMode: { type: Boolean, default: false }, theme: { type: String, enum: ['dark', 'light'], default: 'dark' } },
   lastLogin: Date
 }, { timestamps: true })
 
