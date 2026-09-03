@@ -15,6 +15,7 @@ import WorkspaceNav from './components/WorkspaceNav'
 import AdminPanel from './pages/AdminPanel'
 import AdminLoginPage from './pages/AdminLoginPage'
 import UserSettings from './pages/UserSettings'
+import NotificationCenter from './components/NotificationCenter'
 import styles from './App.module.css'
 
 function WorkspacePage({ children }) {
@@ -159,6 +160,7 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
+      <NotificationCenter />
       <BoardProvider>
         <AppContent />
       </BoardProvider>

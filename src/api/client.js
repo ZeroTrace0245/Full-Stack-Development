@@ -70,6 +70,12 @@ class APIClient {
     }
   }
 
+  async getSystemStatus() { try { return (await axios.get(`${API_BASE_URL}/health`)).data; } catch { return { atlas: { configured: true, connected: false } }; } }
+  async getNotifications() { try { return (await axios.get(`${API_BASE_URL}/notifications`, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async createNotification(input) { try { return (await axios.post(`${API_BASE_URL}/notifications`, input, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async markNotificationRead(id) { try { return (await axios.patch(`${API_BASE_URL}/notifications/${id}/read`, {}, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+  async deleteNotification(id) { try { return (await axios.delete(`${API_BASE_URL}/notifications/${id}`, { headers: this.getHeaders() })).data; } catch (error) { throw error.response?.data || error; } }
+
   async getCurrentUser() {
     try {
       const response = await axios.get(`${API_BASE_URL}/auth/me`, {
