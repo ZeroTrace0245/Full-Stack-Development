@@ -11,10 +11,18 @@ import ActivityFeed from './components/ActivityFeed'
 import TeamMembers from './pages/TeamMembers'
 import Reports from './pages/Reports'
 import Chat from './pages/Chat'
+import WorkspaceNav from './components/WorkspaceNav'
+import AdminPanel from './pages/AdminPanel'
+import AdminLoginPage from './pages/AdminLoginPage'
+import UserSettings from './pages/UserSettings'
 import styles from './App.module.css'
 
+function WorkspacePage({ children }) {
+  return <div className={styles.workspaceLayout}><WorkspaceNav /><div className={styles.workspaceContent}>{children}</div></div>
+}
+
 function AppContent() {
-  const { isLoggedIn, currentPage, goToDashboard, user } = useAuth()
+  const { isLoggedIn, isLoading, currentPage, goToDashboard, user } = useAuth()
   const { board, handleCreateTask, handleEditTask, handleDeleteTask } = useBoard()
   const [showActivity, setShowActivity] = useState(false)
 
@@ -39,25 +47,29 @@ function AppContent() {
     setDeleteConfirm({ taskId, taskTitle })
   }
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deleteConfirm) return
-    handleDeleteTask(deleteConfirm.taskId, deleteConfirm.taskTitle)
+    await handleDeleteTask(deleteConfirm.taskId, deleteConfirm.taskTitle)
     setDeleteConfirm(null)
   }
 
-  const onSubmitTask = (taskData) => {
+  const onSubmitTask = async (taskData) => {
     if (editingTask) {
-      handleEditTask({ ...taskData, id: editingTask.id })
+      await handleEditTask({ ...taskData, id: editingTask.id })
     } else {
-      handleCreateTask({ ...taskData, id: 't' + Date.now() })
+      await handleCreateTask(taskData)
     }
     setIsModalOpen(false)
     setEditingTask(null)
     setSelectedColumn(null)
   }
 
+  if (isLoading) {
+    return <div className={styles.authLoading}>Opening your workspace…</div>
+  }
+
   if (!isLoggedIn) {
-    return <LoginPage />
+    return currentPage === 'admin-login' ? <AdminLoginPage /> : <LoginPage />
   }
 
   if (currentPage === 'dashboard') {
@@ -65,11 +77,11 @@ function AppContent() {
   }
 
   if (currentPage === 'team') {
-    return <TeamMembers />
+    return <WorkspacePage><TeamMembers /></WorkspacePage>
   }
 
   if (currentPage === 'chat') {
-    return <Chat />
+    return <WorkspacePage><Chat /></WorkspacePage>
   }
 
   if (currentPage === 'reports') {
@@ -82,24 +94,19 @@ function AppContent() {
         </div>
       )
     }
-    return <Reports />
+    return <WorkspacePage><Reports /></WorkspacePage>
   }
 
+  if (currentPage === 'admin') {
+    if (user?.role !== 'Admin') return <WorkspacePage><div className={styles.authLoading}>Administrator access required.</div></WorkspacePage>
+    return <WorkspacePage><AdminPanel /></WorkspacePage>
+  }
+
+  if (currentPage === 'settings') return <WorkspacePage><UserSettings /></WorkspacePage>
+
   return (
-    <div className={styles.app}>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <h1>TeamPulse - Sprint Board</h1>
-          <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
-            <button className={styles.activityToggle} onClick={() => setShowActivity(s => !s)} aria-pressed={showActivity}>
-              Activity
-            </button>
-            <button className={styles.backBtn} onClick={goToDashboard}>
-              ← Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+    <WorkspacePage><div className={styles.app}>
+      <button className={styles.activityToggle} onClick={() => setShowActivity(s => !s)} aria-pressed={showActivity}>◴ Activity</button>
       <main className={styles.main}>
         <Board
           onCreateTask={handleCreateTaskClick}
@@ -145,7 +152,7 @@ function AppContent() {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirm(null)}
       />
-    </div>
+    </div></WorkspacePage>
   )
 }
 
