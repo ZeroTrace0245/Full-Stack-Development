@@ -1,70 +1,66 @@
-import React, { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import styles from './LoginPage.module.css'
 
-const Icon = ({ children, size = 20 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
-const Check = () => <Icon size={15}><path d="M20 6 9 17l-5-5"/></Icon>
-
-export default function LoginPage() {
-  const { login, register, goToAdminLogin } = useAuth()
+export default function LoginPage({ initialEnvironment = 'member' }) {
+  const { login, register, adminLogin } = useAuth()
   const [mode, setMode] = useState('login')
-  const [form, setForm] = useState({ username: '', email: '', password: '', remember: true })
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const update = (key, value) => { setForm(current => ({ ...current, [key]: value })); setError('') }
-  const switchMode = () => { setMode(current => current === 'login' ? 'register' : 'login'); setError(''); setShowPassword(false) }
-  const useDemo = () => { setForm(current => ({ ...current, email: 'demo', password: 'Demo@123' })); setError(''); setShowPassword(true) }
+  const [environment, setEnvironment] = useState(initialEnvironment)
+  const [form, setForm] = useState({ username: '', email: import.meta.env.DEV && initialEnvironment === 'admin' ? 'admin' : '', password: import.meta.env.DEV && initialEnvironment === 'admin' ? 'Admin@123' : '', remember: true })
+  const [error, setError] = useState(null), [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false)
+  const pending = useRef(false)
+  const lengthMet = form.password.length >= 8, specialMet = /[^a-zA-Z0-9\s]/.test(form.password)
+  const update = (key, value) => { setForm(current => ({ ...current, [key]: value })); setError(null) }
+  const switchMode = next => { setMode(next); setError(null); setShowPassword(false); setForm(current => ({ ...current, password: '' })); setEnvironment('member') }
+  const changeEnvironment = value => { setEnvironment(value); setError(null); setShowPassword(false); if (import.meta.env.DEV && value === 'admin') setForm(current => ({ ...current, email: 'admin', password: 'Admin@123' })); else if (value === 'demo') setForm(current => ({ ...current, email: 'demo', password: 'Demo@123' })); else if (environment === 'demo' || (import.meta.env.DEV && environment === 'admin')) setForm(current => ({ ...current, email: '', password: '' })) }
   const submit = async event => {
-    event.preventDefault()
-    if (!form.email.trim() || !form.password || (mode === 'register' && !form.username.trim())) return setError('Please complete all required fields.')
-    if (mode === 'register' && form.password.length < 6) return setError('Password must contain at least 6 characters.')
-    setBusy(true); setError('')
+    event.preventDefault(); if (pending.current) return
+    if (mode === 'register' && (!lengthMet || !specialMet)) { setError({ field: 'password', text: 'Use at least 8 characters and one special character.' }); return }
+    pending.current = true; setBusy(true); setError(null)
     try {
       if (mode === 'register') await register(form.username.trim(), form.email.trim(), form.password)
-      else await login(form.email.trim(), form.password, form.remember)
-    } catch (err) { setError(err.error || err.errors?.[0]?.msg || err.message || 'Authentication failed. Please try again.') }
-    finally { setBusy(false) }
+      else await (environment === 'admin' ? adminLogin : login)(form.email.trim(), form.password, form.remember)
+    } catch (err) {
+      const text = err.error || err.errors?.[0]?.msg || err.message || 'Sign-in failed. Please try again.'
+      const field = err.errors?.[0]?.path || (/email/i.test(text) ? 'email' : mode === 'register' && /username/i.test(text) ? 'username' : 'password')
+      setError({ field: ['username', 'email', 'password'].includes(field) ? field : 'password', text })
+    } finally { pending.current = false; setBusy(false) }
   }
-
-  return <main className={styles.page}>
-    <section className={styles.story}>
-      <div className={styles.aurora}/><div className={styles.grid}/>
-      <div className={styles.brand}><span className={styles.brandMark}><i/><i/><i/></span><span>Nova<b>Sync</b></span></div>
-      <div className={styles.storyContent}>
-        <span className={styles.kicker}><i/> Built for teams that move fast</span>
-        <h1>One space.<br/>Every idea.<br/><em>In motion.</em></h1>
-        <p>Plan projects, align your team, and turn ambitious ideas into meaningful progress—all in one beautifully simple workspace.</p>
-        <div className={styles.features}>
-          <span><i><Check/></i> Visual project boards</span><span><i><Check/></i> Real-time collaboration</span><span><i><Check/></i> Clear progress insights</span>
+  const fieldError = field => error?.field === field
+  const errorMessage = field => fieldError(field) && <p id={`${field}-error`} className={styles.error} role="alert">{error.text}</p>
+  return <main className={styles.authCanvas}>
+    <section className={styles.marketing} aria-label="About NovaSync">
+      <div className={styles.brand}><span className={styles.brandMark} aria-hidden="true"><i/><i/><i/></span><span>Nova<b>Sync</b></span></div>
+      <div className={styles.storyContent}><span className={styles.kicker}>YOUR TEAM. ONE CONNECTED WORKSPACE.</span><h1>One space.<br/>Every idea.<br/><em>In motion.</em></h1><p>Bring projects, people and decisions together. Make room for your next great idea.</p></div>
+      <Showcase/>
+      <small className={styles.copyright}>© 2026 NovaSync · Work better, together.</small>
+    </section>
+    <section className={styles.authPane} aria-label="Account access"><div className={styles.authCard}>
+      <div className={styles.modeTabs} role="group" aria-label="Account access mode"><button disabled={busy} aria-pressed={mode === 'login'} onClick={() => mode !== 'login' && switchMode('login')}>Sign In</button><button disabled={busy} aria-pressed={mode === 'register'} onClick={() => mode !== 'register' && switchMode('register')}>Create Account</button></div>
+      <header className={styles.heading}><span>{mode === 'login' ? 'WELCOME BACK' : 'YOUR NEXT CHAPTER'}</span><h2>{mode === 'login' ? 'Make yourself at home.' : 'Start something great.'}</h2><p>{mode === 'login' ? 'Sign in to continue to your workspace.' : 'Create your account and bring your ideas to life.'}</p></header>
+      <form onSubmit={submit}><fieldset disabled={busy}>
+        {mode === 'register' && <div className={styles.group}><label htmlFor="username">Username</label><input autoFocus required minLength={2} maxLength={50} id="username" autoComplete="username" placeholder="Your name" value={form.username} aria-invalid={fieldError('username')} aria-describedby={fieldError('username') ? 'username-error' : undefined} onChange={event => update('username', event.target.value)}/>{errorMessage('username')}</div>}
+        <div className={styles.group}><label htmlFor="email">{mode === 'login' ? 'Email or username' : 'Email address'}</label><input required id="email" type={mode === 'login' ? 'text' : 'email'} autoComplete={mode === 'login' ? 'username' : 'email'} autoFocus={mode === 'login'} placeholder={mode === 'login' ? 'you@company.com or username' : 'you@company.com'} value={form.email} aria-invalid={fieldError('email')} aria-describedby={fieldError('email') ? 'email-error' : undefined} onChange={event => update('email', event.target.value)}/>{errorMessage('email')}</div>
+        <div className={styles.group}><label htmlFor="password">Password</label><div className={styles.passwordWrap}><input required id="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Enter your password" value={form.password} aria-invalid={fieldError('password')} aria-describedby={[mode === 'register' ? 'password-rules' : '', fieldError('password') ? 'password-error' : ''].filter(Boolean).join(' ') || undefined} onChange={event => update('password', event.target.value)}/><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</button></div>{errorMessage('password')}
+          {mode === 'register' && <ul id="password-rules" className={styles.passwordRules}><li className={lengthMet ? styles.met : ''}><span aria-hidden="true">{lengthMet ? '✓' : '○'}</span>At least 8 characters<span className={styles.srOnly}>{lengthMet ? ' — met' : ' — not met'}</span></li><li className={specialMet ? styles.met : ''}><span aria-hidden="true">{specialMet ? '✓' : '○'}</span>One special character<span className={styles.srOnly}>{specialMet ? ' — met' : ' — not met'}</span></li></ul>}
         </div>
-      </div>
-      <div className={styles.preview} aria-hidden="true">
-        <div className={styles.previewTop}><span/><span/><span/><i/></div>
-        <div className={styles.previewBody}><div className={styles.previewSide}><b/><b/><b/><b/></div><div className={styles.previewMain}><div className={styles.previewTitle}/><div className={styles.previewStats}><i/><i/><i/></div><div className={styles.previewBars}><span/><span/><span/></div></div></div>
-      </div>
-      <p className={styles.copyright}>© 2026 NovaSync. Work better, together.</p>
-    </section>
-
-    <section className={styles.authSide}>
-      <div className={styles.mobileBrand}><span className={styles.brandMark}><i/><i/><i/></span><span>Nova<b>Sync</b></span></div>
-      <div className={styles.authCard}>
-        <div className={styles.heading}><span>{mode === 'login' ? 'WELCOME BACK' : 'JOIN NOVASYNC'}</span><h2>{mode === 'login' ? 'Sign in to your workspace' : 'Create your workspace'}</h2><p>{mode === 'login' ? 'Enter your details to continue where you left off.' : 'Start organizing your team and projects in minutes.'}</p></div>
-        <div className={styles.modeTabs}><button type="button" className={mode === 'login' ? styles.active : ''} onClick={() => mode !== 'login' && switchMode()}>Sign in</button><button type="button" className={mode === 'register' ? styles.active : ''} onClick={() => mode !== 'register' && switchMode()}>Create account</button></div>
-        {mode === 'login' && import.meta.env.DEV && <button type="button" className={styles.userDemo} onClick={useDemo}><span>✦</span><span><strong>Development member</strong><small>demo · Demo@123</small></span><b>Use credentials</b></button>}
-        {mode === 'login' && <button type="button" className={styles.adminDemo} onClick={goToAdminLogin}><span>◆</span><span><strong>Administrator portal</strong><small>Use the separate secure admin sign in</small></span><b>Open portal →</b></button>}
-        {error && <div className={styles.error} role="alert"><span>!</span>{error}</div>}
-        <form onSubmit={submit}>
-          {mode === 'register' && <div className={styles.group}><label htmlFor="username">Username</label><div className={styles.inputWrap}><Icon size={18}><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></Icon><input id="username" autoComplete="username" placeholder="Choose a username" value={form.username} onChange={e => update('username', e.target.value)} autoFocus/></div></div>}
-          <div className={styles.group}><label htmlFor="email">{mode === 'login' ? 'Email or username' : 'Email address'}</label><div className={styles.inputWrap}><Icon size={18}><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></Icon><input id="email" type={mode === 'login' ? 'text' : 'email'} autoComplete={mode === 'login' ? 'username' : 'email'} placeholder={mode === 'login' ? 'you@company.com or username' : 'you@company.com'} value={form.email} onChange={e => update('email', e.target.value)} autoFocus={mode === 'login'}/></div></div>
-          <div className={styles.labelRow}><label htmlFor="password">Password</label>{mode === 'login' && <button type="button">Forgot password?</button>}</div>
-          <div className={styles.inputWrap}><Icon size={18}><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></Icon><input id="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder={mode === 'register' ? 'At least 6 characters' : 'Enter your password'} value={form.password} onChange={e => update('password', e.target.value)}/><button className={styles.show} type="button" onClick={() => setShowPassword(value => !value)}>{showPassword ? 'Hide' : 'Show'}</button></div>
-          {mode === 'login' && <label className={styles.remember}><input type="checkbox" checked={form.remember} onChange={e => update('remember', e.target.checked)}/><span>Keep me signed in</span></label>}
-          {mode === 'register' && <p className={styles.terms}>By creating an account, you agree to our <button type="button">Terms</button> and <button type="button">Privacy Policy</button>.</p>}
-          <button className={styles.submit} disabled={busy}>{busy ? <><i/> Please wait…</> : <>{mode === 'login' ? 'Sign in to NovaSync' : 'Create my account'}<Icon size={18}><path d="M5 12h14m-6-6 6 6-6 6"/></Icon></>}</button>
-        </form>
-        <div className={styles.secure}><Icon size={14}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></Icon> Secure authentication · Your data stays private</div>
-      </div>
-    </section>
+        {mode === 'login' && <><label className={styles.remember}><input type="checkbox" checked={form.remember} onChange={event => update('remember', event.target.checked)}/>Keep me signed in</label><label className={styles.environment}>Sign in as<select value={environment} onChange={event => changeEnvironment(event.target.value)}><option value="member">Workspace member</option><option value="admin">Administrator</option>{import.meta.env.DEV && <option value="demo">Development member · demo</option>}</select></label></>}
+        <button className={styles.submit} disabled={busy}>{busy ? 'Please wait…' : mode === 'register' ? 'Create my account' : 'Sign In'}<span aria-hidden="true">→</span></button>
+      </fieldset></form>
+      <p className={styles.secure}>◇ {environment === 'admin' ? 'Administrator access requires an assigned admin role.' : 'Your next step starts here.'}</p>
+    </div></section>
   </main>
+}
+
+function Showcase() {
+  const [slide, setSlide] = useState(0), [hovered, setHovered] = useState(false), [focused, setFocused] = useState(false), [paused, setPaused] = useState(false), [reduced, setReduced] = useState(false)
+  useEffect(() => { const media = window.matchMedia('(prefers-reduced-motion: reduce)'); const update = () => setReduced(media.matches); update(); media.addEventListener('change', update); return () => media.removeEventListener('change', update) }, [])
+  useEffect(() => { if (hovered || focused || paused || reduced) return; const timer = setInterval(() => setSlide(value => (value + 1) % 2), 8000); return () => clearInterval(timer) }, [hovered, focused, paused, reduced])
+  return <section className={styles.showcase} aria-label="Workspace showcase" aria-roledescription="carousel" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false) }}>
+    <div className={styles.slides}>
+      <article className={`${styles.slide} ${slide === 0 ? styles.visible : ''}`} aria-hidden={slide !== 0}><header><span>PLAN WITH CONTEXT</span><small>Illustrative schedule</small></header><h3>Every milestone. A clear path.</h3><div className={styles.gantt}><div className={styles.axis}><span>LAUNCH PLAN</span><span>W1</span><span>W2</span><span>W3</span><span>W4</span></div>{[['Scope',1,1],['Build',2,2],['Validate',3,1],['Launch',4,1]].map(([label,start,duration], index) => <div className={styles.ganttRow} key={label}><span>{label}</span><div><i style={{ left: `${(start - 1) * 25}%`, width: `${duration * 25 - 3}%` }} className={index === 3 ? styles.milestone : ''}>{index === 3 ? '◆' : ''}</i></div></div>)}</div><footer><span><i/> Example critical path</span><span>◆ Release milestone</span></footer></article>
+      <article className={`${styles.slide} ${slide === 1 ? styles.visible : ''}`} aria-hidden={slide !== 1}><header><span>CONNECTED ENVIRONMENTS</span><small>Concept preview · sample data</small></header><h3>A pulse on your physical workspace.</h3><div className={styles.sensorGrid}><div><span>● Shelf A-02</span><strong>23.4<small> °C</small></strong><p>Temperature · Healthy</p><div className={styles.sparkline}>{[35,45,38,52,42,56,48,44,51,46,49,45].map((height,index) => <i key={index} style={{height:`${height}%`}}/>)}</div></div><div><span>● Shelf B-04</span><strong>46<small>%</small></strong><p>Humidity · Healthy</p><div className={styles.sensorStatus}>✓ Within example range</div></div></div><footer>Illustrative monitoring integration · not a live connection</footer></article>
+    </div>
+    <div className={styles.carouselControls}><div>{['Schedule preview','Environment preview'].map((label,index) => <button key={label} aria-label={`Show ${label}`} aria-pressed={slide === index} onClick={() => setSlide(index)}/>)}</div><button className={styles.pause} aria-label={paused ? 'Resume showcase' : 'Pause showcase'} onClick={() => setPaused(value => !value)}>{paused ? '▶' : 'Ⅱ'}</button></div>
+  </section>
 }

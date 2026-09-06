@@ -254,3 +254,29 @@
   }
 }
 
+
+/* Opaque inner cards keep content separate from the glass column behind it. */
+:global(#root) .card {
+  --task-fill: rgba(25,34,49,.94); --task-hover: #243349; --task-text: #f1f5fc; --task-muted: #b1bfd2;
+  background: var(--task-fill) !important; color: var(--task-text) !important; backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid #ffffff18 !important; box-shadow: 0 5px 14px #0003 !important; border-radius: 12px; padding: 18px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 12px; flex-shrink: 0; min-width: 0;
+  & .cardContent { min-width: 0; width: 100%; gap: 10px; }
+  & .title { order: -1; color: var(--task-text); font-size: 16px; font-weight: 750; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
+  & .badges, & .labels { flex-wrap: wrap; gap: 6px; margin: 0; }
+  & .badge, & .badgeType, & .labels span { font-size: 10px; line-height: 1.5; padding: 4px 8px; max-width: 100%; box-sizing: border-box; overflow-wrap: anywhere; color: var(--task-muted); }
+  & .description { color: var(--task-muted) !important; font-size: 12px; line-height: 1.6; margin: 0; overflow-wrap: anywhere; }
+  & .relationship { line-height: 1.5; overflow-wrap: anywhere; }
+  & .progress { margin-top: 18px; margin-bottom: 4px; }
+  & .progress span { color: var(--task-muted); }
+  & .meta { color: var(--task-muted); flex-wrap: wrap; border-top: 1px solid #ffffff12; padding-top: 12px; }
+  & .actions { align-self: flex-end; margin: 0; width: auto; }
+  & .secondary { opacity: 1; transform: none; }
+  & .actionBtn { color: var(--task-text); width: 32px; height: 32px; border: 1px solid #ffffff18; border-radius: 7px; background: #8db8fa0d; }
+  & .actionBtn:hover { background: #8db8fa26; }
+  & .actionBtn:focus-visible { outline: 2px solid #8db8fa; outline-offset: 3px; }
+}
+:global(#root) .card:hover:not(.dragging) { background: var(--task-hover) !important; box-shadow: 0 12px 26px #0005 !important; translate: 0 -3px; }
+:global(#root) .card:focus-visible { outline: 2px solid #8db8fa; outline-offset: 3px; }
+:global(:root[data-theme="light"]) :global(#root) .card { --task-fill: rgba(250,252,255,.97); --task-hover: #fff; --task-text: #192a42; --task-muted: #536680; border-color: #a9bdd54d !important; }
+@media(prefers-reduced-motion:reduce) { :global(#root) .card { animation: none; translate: none !important; } }

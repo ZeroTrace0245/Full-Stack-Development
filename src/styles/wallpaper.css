@@ -1,0 +1,65 @@
+/* One viewport-sized wallpaper shared by every screen and glass surface.
+   Vite bundles these source images with production-safe, hashed URLs. */
+:root {
+  --wallpaper-light-opacity: 0;
+}
+
+:root[data-theme="light"] {
+  --wallpaper-light-opacity: 1;
+}
+
+html body {
+  isolation: isolate;
+  background: #202b32;
+}
+
+:root[data-theme="light"] body { background: #eeeded; }
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+body::before {
+  background-image: linear-gradient(rgba(8, 11, 18, 0.12), rgba(8, 11, 18, 0.12)), url('../../docs/background/mica-dark.png');
+}
+
+body::after {
+  background-image: url('../../docs/background/mica-light.png');
+  opacity: var(--wallpaper-light-opacity);
+  transition: opacity 450ms ease;
+}
+
+/* Clear only page shells, leaving card fills, hover effects, and animated
+   pseudo-elements intact. Specificity also overrides legacy light styles. */
+:root #root :is(
+  [class*="_workspaceLayout_"],
+  [class*="_workspaceContent_"],
+  [class*="_app_"],
+  [class*="_authLoading_"],
+  [class*="_shell_"],
+  [class*="_page_"],
+  [class*="_container_"],
+  [class*="_chatContainer_"]
+) {
+  background: transparent !important;
+}
+
+/* Login columns use translucent tints so the wallpaper continues across them. */
+:root #root [class*="_story_"] { background: rgba(12, 17, 26, 0.55); }
+:root #root [class*="_authSide_"] { background: rgba(12, 17, 26, 0.25); }
+
+:root[data-theme="light"] #root [class*="_sidebar_"] {
+  background: rgba(245, 248, 252, 0.78) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after { transition: none; }
+}

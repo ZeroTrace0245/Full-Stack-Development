@@ -1,39 +1,23 @@
-import React, { useEffect } from 'react'
+import { useEffect, useId, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import styles from './Modal.module.css'
 
-export default function Modal({ isOpen, onClose, title, children }) {
-  // Close modal on Escape key
+export default function Modal({ isOpen, onClose, title, children, compact = false, solid = false }) {
+  const dialog = useRef(null)
+  const titleId = useId()
+  const close = useRef(onClose)
+  close.current = onClose
   useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose()
-      }
-    }
-    if (isOpen) {
-      window.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    }
-    return () => {
-      window.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
-    }
-  }, [isOpen, onClose])
-
+    if (!isOpen) return
+    const previous = document.activeElement
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialog.current.showModal()
+    return () => { document.body.style.overflow = overflow; previous?.focus() }
+  }, [isOpen])
   if (!isOpen) return null
-
-  return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
-            ✕
-          </button>
-        </div>
-        <div className={styles.content}>
-          {children}
-        </div>
-      </div>
-    </div>
-  )
+  return createPortal(<dialog ref={dialog} className={`${styles.modal} ${compact ? styles.compact : ''} ${solid ? styles.solid : ''}`} aria-labelledby={titleId} onCancel={event=>{event.preventDefault();close.current()}} onClick={event=>{if(event.target===event.currentTarget){const rect=event.currentTarget.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)close.current()}}}>
+    <header className={styles.header}><h2 id={titleId}>{title}</h2><button type="button" onClick={onClose} aria-label="Close dialog">×</button></header>
+    <div className={styles.content}>{children}</div>
+  </dialog>,document.body)
 }

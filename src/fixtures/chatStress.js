@@ -1,0 +1,6 @@
+// Development-only preview: open Messages with ?chatPreview=stress.
+export const stressMessages = [
+  { id: 'stress-long', sender: { username: 'Maya Fernando' }, createdAt: '2026-09-06T08:00:00Z', content: 'Before we approve the shelf-monitoring rollout, please verify all three calibration runs, confirm the replacement sensor delivery date, and attach the final acceptance report. The installation window depends on facilities access and completion of the humidity baseline.\n\n' + 'Keep the current monitoring configuration until the review is signed off. '.repeat(18) },
+  { id: 'stress-alert', type: 'alert', severity: 'critical', sender: { username: 'Shelf sensor · B-04' }, createdAt: '2026-09-06T08:02:00Z', content: 'Temperature threshold exceeded: 31.8°C (limit 28°C). Reading sustained for 10 minutes. Inspect ventilation and verify the probe before resuming the validation run.' },
+  { id: 'stress-file', sender: { username: 'Dinesh Silva' }, createdAt: '2026-09-06T08:04:00Z', content: 'Calibration evidence and the proposed installation schedule are ready for review. Trace ID: ' + 'SHELF_B04_20260906_'.repeat(28), attachments: [{ name: 'Environmental_monitoring_calibration_and_acceptance_report_revision_12.pdf', sizeLabel: 'PDF · 4.8 MB' }, { name: 'Shelf_installation_schedule_dependencies.csv', sizeLabel: 'CSV · 128 KB' }] },
+]

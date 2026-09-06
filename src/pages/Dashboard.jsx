@@ -1,7 +1,9 @@
 import React from 'react'
+import WorkspaceNav from '../components/WorkspaceNav'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import styles from './Dashboard.module.css'
+import { dashboardTasks, isDone, isDoing } from './dashboardData'
 
 const paths = {
   grid: <><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></>,
@@ -18,19 +20,16 @@ const paths = {
 function Icon({ name, size = 20 }) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg> }
 
 export default function Dashboard() {
-  const { user, logout, goToBoard, goToTeam, goToReports, goToChat, goToAdmin, goToSettings } = useAuth()
+  const { user, goToBoard } = useAuth()
   const { board } = useBoard()
   const columns = board?.columns || []
   const total = columns.reduce((sum, col) => sum + col.tasks.length, 0)
-  const isDone = title => /done|complete|deployed|production/i.test(title)
-  const isDoing = title => /doing|progress|development/i.test(title)
   const done = columns.filter(c => isDone(c.title)).reduce((sum, c) => sum + c.tasks.length, 0)
   const doing = columns.filter(c => isDoing(c.title) && !isDone(c.title)).reduce((sum, c) => sum + c.tasks.length, 0)
   const todo = Math.max(0, total - done - doing)
   const percent = total ? Math.round(done / total * 100) : 0
-  const tasks = columns.flatMap(column => column.tasks.map(task => ({ ...task, columnTitle: column.title }))).slice(0, 4)
+  const { recent: tasks, scheduled, unscheduled } = dashboardTasks(columns)
   const firstName = user?.username?.split(/[ _-]/)[0] || 'there'
-  const initials = (user?.username || 'NS').split(/[ _-]/).map(p => p[0]).join('').slice(0, 2).toUpperCase()
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())
   const tilt = event => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -39,25 +38,30 @@ export default function Dashboard() {
   }
   const resetTilt = event => { event.currentTarget.style.setProperty('--rx', '0deg'); event.currentTarget.style.setProperty('--ry', '0deg') }
   const mouseGlow = event => { const r = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty('--mouse-x', `${event.clientX-r.left}px`); event.currentTarget.style.setProperty('--mouse-y', `${event.clientY-r.top}px`) }
-  const nav = [['grid','Overview',null,true],['board','My board',goToBoard],['users','Team',goToTeam],['message','Messages',goToChat],...(user?.role === 'Admin' ? [['chart','Reports',goToReports],['users','Admin',goToAdmin]] : []),['settings','Settings',goToSettings]]
   const stats = [
-    {label:'Total tasks',value:total,note:'Across this sprint',icon:'layers',tone:'violet'},
+    {label:'Total tasks',value:total,note:'Across your board',icon:'layers',tone:'violet'},
     {label:'In progress',value:doing,note:'Currently moving',icon:'clock',tone:'orange'},
-    {label:'Completed',value:done,note:`${percent}% completion rate`,icon:'check',tone:'green'},
+    {label:'Completed',value:done,note:'Finished and delivered',icon:'check',tone:'green'},
     {label:'To do',value:todo,note:'Ready to be picked up',icon:'board',tone:'blue'}]
   return <div className={styles.shell} onPointerMove={mouseGlow}>
-    <aside className={styles.sidebar}>
-      <div className={styles.brand}><span className={styles.brandMark}><i/><i/><i/></span><span>Nova<b>Sync</b></span></div>
-      <nav className={styles.nav} aria-label="Main navigation"><p>Workspace</p>{nav.map(([icon,label,action,active]) => <button key={label} className={active?styles.navActive:''} onClick={action||undefined}><Icon name={icon}/><span>{label}</span>{label==='Messages'&&<i>3</i>}</button>)}</nav>
-      <div className={styles.sidebarBottom}><button className={styles.sideProfile} onClick={goToSettings}>{user?.avatar?<img className={styles.avatar} src={user.avatar} alt=""/>:<span className={styles.avatar}>{initials}</span>}<span><strong>{user?.username}</strong><small>{user?.role||'Member'}</small></span></button><button className={styles.logout} onClick={logout}><Icon name="logout"/><span>Sign out</span></button></div>
-    </aside>
+    <WorkspaceNav/>
     <main className={styles.main}>
       <header className={styles.topbar}><div><p>{today}</p><h1>Good to see you, {firstName}.</h1></div><button className={styles.newTask} onClick={goToBoard}><Icon name="plus" size={18}/> New task</button></header>
-      <section className={styles.hero} onPointerMove={tilt} onPointerLeave={resetTilt}><div className={styles.heroGlow}/><div className={styles.heroContent}><span className={styles.eyebrow}><i/> Your workspace is up to date</span><h2>Turn ideas into<br/><em>momentum.</em></h2><p>Keep your team aligned, move work forward, and make every sprint count.</p><button onClick={goToBoard}>Open project board <Icon name="arrow" size={18}/></button></div><div className={styles.orbit} aria-hidden="true"><div className={styles.orbitOuter}><span/><span/></div><div className={styles.orbitInner}><span/></div><div className={styles.orbitCore}><strong>{percent}%</strong><small>complete</small></div></div></section>
+      <section className={styles.hero}><div className={styles.heroGlow}/><div className={styles.heroContent}><span className={styles.eyebrow}><i/> Your project at a glance</span><h2>Turn ideas into <em>momentum.</em></h2><p>Keep your team aligned and your next steps in sight.</p></div><button onClick={goToBoard}>Open project board <Icon name="arrow" size={18}/></button></section>
       <section className={styles.statsGrid} aria-label="Project statistics">{stats.map((stat,index)=><article className={`${styles.statCard} ${styles[stat.tone]}`} key={stat.label} onPointerMove={tilt} onPointerLeave={resetTilt} style={{'--delay':`${index*60}ms`}}><div className={styles.statIcon}><Icon name={stat.icon}/></div><span>{stat.label}</span><strong>{String(stat.value).padStart(2,'0')}</strong><small>{stat.note}</small></article>)}</section>
       <section className={styles.lowerGrid}>
-        <article className={styles.tasksPanel}><div className={styles.panelHeader}><div><span>Live board</span><h3>Recent tasks</h3></div><button onClick={goToBoard}>View all <Icon name="arrow" size={15}/></button></div><div className={styles.taskList}>{tasks.length?tasks.map((task,index)=><button className={styles.taskRow} onClick={goToBoard} key={task.id||`${task.title}-${index}`}><span className={styles.taskCheck}><Icon name={isDone(task.columnTitle)?'check':'clock'} size={15}/></span><span className={styles.taskName}><strong>{task.title}</strong><small>{task.assignee||'Unassigned'}</small></span><span className={`${styles.status} ${isDone(task.columnTitle)?styles.statusDone:isDoing(task.columnTitle)?styles.statusDoing:styles.statusTodo}`}>{isDone(task.columnTitle)?'Done':isDoing(task.columnTitle)?'In progress':'To do'}</span><Icon name="arrow" size={16}/></button>):<div className={styles.emptyState}><Icon name="layers" size={28}/><p>No tasks yet. Start by creating your first one.</p></div>}</div></article>
-        <article className={styles.progressPanel}><div className={styles.panelHeader}><div><span>Sprint health</span><h3>Weekly progress</h3></div></div><div className={styles.ring} style={{'--progress':percent}}><div><strong>{percent}%</strong><small>completed</small></div></div><div className={styles.progressLegend}><span><i className={styles.legendDone}/>{done} done</span><span><i className={styles.legendDoing}/>{doing} active</span><span><i className={styles.legendTodo}/>{todo} queued</span></div></article>
+        <article className={styles.tasksPanel}><div className={styles.panelHeader}><div><span>Live board</span><h3>Recent tasks</h3></div><button onClick={goToBoard}>View all <Icon name="arrow" size={15}/></button></div><div className={styles.taskList}>{tasks.length?tasks.map((task,index)=><button className={styles.taskRow} onClick={goToBoard} key={task.id||`${task.title}-${index}`}><span className={styles.taskCheck}><Icon name={isDone(task.columnTitle)?'check':'clock'} size={15}/></span><span className={styles.taskName}><strong>{task.title}</strong><small>{task.assignee||'Unassigned'}</small></span><span className={`${styles.status} ${isDone(task.columnTitle)?styles.statusDone:isDoing(task.columnTitle)?styles.statusDoing:styles.statusTodo}`}>{task.columnTitle}</span><Icon name="arrow" size={16}/></button>):<div className={styles.emptyState}><Icon name="layers" size={28}/><p>No tasks yet. Start by creating your first one.</p></div>}</div></article>
+        <article className={styles.progressPanel}><div className={styles.panelHeader}><div><span>All board tasks</span><h3>Overall progress</h3></div></div><div className={styles.ring} style={{'--progress':percent}}><div><strong>{percent}%</strong><small>{total ? `${done} of ${total} tasks` : 'No tasks yet'}</small></div></div><div className={styles.progressLegend}><span><i className={styles.legendDone}/>{done} done</span><span><i className={styles.legendDoing}/>{doing} active</span><span><i className={styles.legendTodo}/>{todo} queued</span></div></article>
+      </section>
+      <section className={styles.timelinePanel} aria-label="Task deadlines">
+        <div className={styles.panelHeader}><div><span>Schedule · next deadlines</span><h3>Upcoming & overdue</h3></div><button onClick={goToBoard}>Plan on board <Icon name="arrow" size={15}/></button></div>
+        <p className={styles.timelineIntro}>Open tasks ordered by due date. {unscheduled > 0 && `${unscheduled} open task${unscheduled === 1 ? '' : 's'} still need a due date.`}</p>
+        {scheduled.length ? <ol className={styles.timeline}>{scheduled.map((task,index) => <li key={task.id || index} className={task.overdue ? styles.overdue : ''}>
+          <button onClick={goToBoard} className={styles.deadlineTask}>
+            <time dateTime={task.dueDate}>{task.deadline.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}<small>{task.overdue ? 'Overdue' : 'Due date'}</small></time>
+            <span className={styles.timelineDot}/><span className={styles.taskName}><strong>{task.title}</strong><small>{task.assignee || 'Unassigned'} · {task.columnTitle}</small></span><Icon name="arrow" size={16}/>
+          </button>
+        </li>)}</ol> : <div className={styles.emptyState}><Icon name="clock" size={28}/><p>No scheduled open tasks. Add due dates on the board to see your timeline.</p></div>}
       </section>
     </main>
   </div>

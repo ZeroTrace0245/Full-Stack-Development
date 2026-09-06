@@ -128,7 +128,7 @@ function AppContent() {
           setEditingTask(null)
           setSelectedColumn(null)
         }}
-        title={editingTask ? 'Edit Task' : 'Create New Task'}
+        title={editingTask ? 'Edit Task' : 'Create Task'}
       >
         <TaskForm
           columns={board.columns}
@@ -145,9 +145,10 @@ function AppContent() {
 
       <ConfirmDialog
         isOpen={!!deleteConfirm}
-        title="Delete Task?"
-        message={`Are you sure you want to delete "${deleteConfirm?.taskTitle}"? This cannot be undone.`}
-        confirmText="Delete"
+        title="Delete Task"
+        message="This task and its subtasks and comments will be permanently removed from your board."
+        taskName={deleteConfirm?.taskTitle}
+        confirmText="Delete Task"
         cancelText="Cancel"
         isDangerous={true}
         onConfirm={handleConfirmDelete}

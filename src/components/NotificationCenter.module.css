@@ -2,3 +2,49 @@
 .root{top:auto!important;bottom:22px}
 .panel{top:auto!important;bottom:48px}
 @media(max-width:600px){.root{top:auto!important;bottom:92px}.panel{top:auto!important;bottom:46px;max-height:calc(100vh - 152px)}}
+
+/* Shared Mica treatment, isolated to the notification controls. */
+.root { --notice-panel: rgba(22,29,43,.84); --notice-text: #f1f5fc; --notice-muted: #b0bdd0; --notice-line: #ffffff1a; --notice-field: #101722; }
+:global(:root[data-theme="light"]) .root { --notice-panel: rgba(246,249,255,.88); --notice-text: #192a42; --notice-muted: #52647d; --notice-line: #344e7026; --notice-field: #eaf0f7; }
+:global(#root) .root {
+  & .panel, & .atlas, & .bell, & .tooltip { background: var(--notice-panel); color: var(--notice-text); border: 1px solid var(--notice-line); box-shadow: inset 1px 1px #ffffff1a,0 18px 48px #00000040; backdrop-filter: blur(48px) saturate(125%); -webkit-backdrop-filter: blur(48px) saturate(125%); }
+  & .panel { overflow: visible; border-radius: 17px; }
+  & .panel::after { content: ''; position: absolute; width: 12px; height: 12px; bottom: -7px; right: 12px; transform: rotate(45deg); background: var(--notice-panel); border-right: 1px solid var(--notice-line); border-bottom: 1px solid var(--notice-line); pointer-events: none; }
+  & .panelBody { overflow: auto; max-height: inherit; border-radius: inherit; overscroll-behavior: contain; }
+  & .panel header { border-color: var(--notice-line); }
+  & .panel header small { color: var(--notice-muted); font-size: 10px; }
+  & .panel h2 { color: var(--notice-text); font-size: 21px; }
+  & .panel header button { color: var(--notice-muted); border-radius: 7px; width: 32px; height: 32px; }
+  & .bell:hover, & .panel header button:hover { color: var(--notice-text); background: color-mix(in srgb,var(--notice-panel) 80%,#719de6); }
+  & button:focus-visible, & input:focus-visible, & select:focus-visible, & textarea:focus-visible { outline: 2px solid #8db8fa; outline-offset: 3px; }
+  & .composer { border-color: var(--notice-line); }
+  & .composer input, & .composer select, & .composer textarea { background: var(--notice-field) !important; color: var(--notice-text) !important; border-color: var(--notice-line) !important; font-family: inherit; font-size: 12px; }
+  & .composer input::placeholder, & .composer textarea::placeholder { color: var(--notice-muted) !important; }
+  & .feed article { grid-template-columns: minmax(0,1fr) auto; gap: 8px; padding: 18px 2px; border-color: var(--notice-line); }
+  & .kind { grid-column: 1; justify-self: start; font-size: 9px; line-height: 1.4; padding: 5px 8px; }
+  & .feed article > div { grid-column: 1; min-width: 0; }
+  & .feed h3 { font-size: 15px; line-height: 1.4; font-weight: 750; color: var(--notice-text); overflow-wrap: anywhere; }
+  & .feed p { font-size: 13px; line-height: 1.6; color: var(--notice-muted); overflow-wrap: anywhere; }
+  & .feed small, & .feed time { color: var(--notice-muted); font-size: 11px; line-height: 1.5; }
+  & .feed time { color: var(--notice-text); margin-bottom: 6px; }
+  & .delete { grid-column: 2; grid-row: 1 / 3; color: var(--notice-muted); }
+  & .delete:hover { color: #ef7777; }
+  & .empty { padding: 36px 18px; }
+  & .empty > span { display: grid; place-items: center; width: 46px; height: 46px; margin: 0 auto 16px; border: 1px solid #8db8fa40; border-radius: 50%; background: #8db8fa18; color: var(--notice-text); font-size: 24px; }
+  & .empty h3 { margin: 0 0 8px; font-size: 17px; }
+  & .empty p { max-width: 270px; margin: 0 auto; }
+  & .connection { position: relative; }
+  & .atlas { cursor: pointer; font-family: inherit; }
+  & .atlas:disabled { cursor: progress; opacity: 1; }
+  & .atlas i { flex: 0 0 8px; }
+  & .syncing { box-sizing: border-box; background: transparent; border: 2px solid #f0c56355; border-top-color: #f0c563; border-right-color: #f0c563; box-shadow: 0 0 10px #f0c56328; animation: connectionSpin 1s linear infinite; }
+  & .tooltip { position: absolute; bottom: calc(100% + 12px); right: 0; width: min(260px,calc(100vw - 92px)); padding: 14px; box-sizing: border-box; border-radius: 12px; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .15s,transform .15s,visibility .15s; z-index: 3; pointer-events: none; text-align: left; }
+  & .tooltip::after { content: ''; position: absolute; inset: 100% 0 -14px; }
+  & .connection:hover .tooltip, & .connection:focus-within .tooltip { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
+  & .tooltip strong { display: block; font-size: 12px; margin-bottom: 7px; }
+  & .tooltip span, & .tooltip small { display: block; font-size: 11px; line-height: 1.6; color: var(--notice-muted); }
+  & .tooltip small { margin-top: 6px; }
+}
+@keyframes connectionSpin { to { transform: rotate(360deg); } }
+@media(max-width:600px) { :global(#root) .root .atlas > span { display: none; } }
+@media(prefers-reduced-motion:reduce) { :global(#root) .root .syncing { animation: none; } :global(#root) .root .tooltip { transition: none; } }

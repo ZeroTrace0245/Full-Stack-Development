@@ -24,3 +24,95 @@
 .panelHeader span{color:#707985}.panelHeader h3{color:#eef2f5}.panelHeader button{color:#9db7da}.taskRow{border-top-color:#ffffff0d;color:#e9edf1}.taskRow:hover{background:#ffffff08}.taskCheck{background:#ffffff0a;color:#8997a8}.taskName small{color:#6f7883}.statusDone{background:#7895b31a;color:#9eb9d3}.statusDoing{background:#d190631a;color:#d5a27d}.statusTodo{background:#7f8fa81a;color:#a4b3c8}.taskRow>svg{color:#606b77}.emptyState{color:#7d8792}.ring{background:conic-gradient(#829fca calc(var(--progress)*1%),#ffffff0d 0)}.ring:after{background:#12161c}.ring small{color:#79838f}.progressLegend{border-top-color:#ffffff0d}.progressLegend span{color:#7d8792}.legendDone{background:#829fca}.legendDoing{background:#d2966e}.legendTodo{background:#657184}
 @keyframes pulseDot{50%{box-shadow:0 0 0 9px #a9bedb00}}
 @media(max-width:760px){.sidebar{background:#0b0e13e8;border:1px solid #ffffff14;box-shadow:0 18px 46px #0000008f}}
+
+/* Dashboard clarity pass: scoped materials and responsive data panels. */
+.shell { --dash-panel: rgba(22,29,43,.8); --dash-text: #f2f6ff; --dash-muted: #b1bfd3; --dash-line: #ffffff1f; --dash-hover: #91baff1c; --dash-accent: #a8caff; isolation: isolate; }
+.shell::before { background: linear-gradient(#0000002e,#0000002e),radial-gradient(440px circle at var(--mouse-x,70%) var(--mouse-y,20%),#7792b514,transparent 67%); z-index: -1; }
+:global(:root[data-theme="light"]) .shell { --dash-panel: rgba(246,249,255,.83); --dash-text: #192b43; --dash-muted: #536680; --dash-line: #344e7026; --dash-hover: #3879cd12; --dash-accent: #275fa5; }
+:global(#root) .shell {
+  & .main { min-width: 0; padding-top: 28px; }
+  & .topbar { gap: 16px; margin-bottom: 22px; }
+  & .topbar h1 { color: var(--dash-text); overflow-wrap: anywhere; }
+  & .topbar p { color: var(--dash-muted); }
+  & .hero, & .statCard, & .tasksPanel, & .progressPanel, & .timelinePanel {
+    background: var(--dash-panel) !important;
+    border: 1px solid var(--dash-line) !important;
+    box-shadow: inset 1px 1px 0 #ffffff1f,0 18px 46px #00000030 !important;
+    backdrop-filter: blur(48px) saturate(125%);
+    -webkit-backdrop-filter: blur(48px) saturate(125%);
+    color: var(--dash-text);
+  }
+  & .hero { min-height: 0; padding: 24px 28px; gap: 24px; border-radius: 18px; transform: none; }
+  & .heroContent { max-width: none; }
+  & .hero h2 { color: var(--dash-text) !important; font-size: clamp(23px,2.5vw,32px); line-height: 1.2; letter-spacing: -.04em; }
+  & .hero h2 em { color: var(--dash-accent); }
+  & .hero .eyebrow { margin-bottom: 10px; font-size: 10px; color: var(--dash-muted); }
+  & .hero p { color: var(--dash-muted); max-width: none; margin: 8px 0 0; font-size: 13px; }
+  & .hero > button { position: relative; z-index: 1; flex-shrink: 0; }
+  & .statsGrid { gap: 18px; margin: 22px 0; }
+  & .statCard { min-width: 0; padding: 25px; column-gap: 12px; }
+  & .statCard > strong { font-size: 40px; line-height: 1.2; letter-spacing: -.04em; margin-top: 10px; overflow-wrap: anywhere; }
+  & .statCard > span { color: var(--dash-muted); font-size: 13px; }
+  & .statCard > small { color: var(--dash-muted); font-size: 11px; line-height: 1.5; }
+  & .statIcon { width: 42px; height: 42px; border: 1px solid #ffffff18; box-shadow: 0 0 24px #89aeed20,inset 0 1px #ffffff14; background: #91baff20; color: var(--dash-accent); }
+  & .orange .statIcon { background: #d7966824; color: #b67945; }
+  & .violet .statIcon { background: #ad91e12b; color: #a28ac6; }
+  & .green .statIcon { background: #75bda42b; color: #5ba38b; }
+  & .lowerGrid { grid-template-columns: minmax(0,1.65fr) minmax(250px,.8fr); align-items: stretch; }
+  & .tasksPanel, & .progressPanel, & .timelinePanel { min-width: 0; padding: 26px; border-radius: 18px; }
+  & .panelHeader { gap: 16px; }
+  & .panelHeader h3 { color: var(--dash-text); font-size: 20px; margin-top: 5px; }
+  & .panelHeader span { color: var(--dash-muted); font-size: 10px; }
+  & .panelHeader button { padding: 9px 12px; border: 1px solid var(--dash-line); border-radius: 8px; color: var(--dash-accent); font-size: 12px; flex-shrink: 0; transition: background .18s,border-color .18s; }
+  & .panelHeader button:hover { background: var(--dash-hover); border-color: var(--dash-accent); gap: 6px; }
+  & .newTask { flex-shrink: 0; background: #a8caff; color: #142740; border: 1px solid #c0d8ff; }
+  & .newTask:hover { background: #c5dcff; box-shadow: 0 6px 24px #82adf350; transform: translateY(-2px); }
+  & button:focus-visible { outline: 2px solid var(--dash-accent); outline-offset: 4px; }
+  & .taskRow { grid-template-columns: auto minmax(0,1fr) minmax(60px,110px) auto; padding: 16px 6px; border-color: var(--dash-line) !important; color: var(--dash-text) !important; background: transparent !important; }
+  & .taskRow:hover { background: var(--dash-hover) !important; }
+  & .taskName strong { color: var(--dash-text); font-size: 14px; font-weight: 650; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+  & .taskName small { color: var(--dash-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; margin-top: 4px; }
+  & .status { display: block; text-align: center; font-size: 10px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; color: var(--dash-accent); }
+  & .taskCheck, & .taskRow > svg { color: var(--dash-accent); }
+  & .ring { margin: 16px auto 24px; background: conic-gradient(#829fca calc(var(--progress)*1%),var(--dash-line) 0); }
+  & .ring::after { background: var(--dash-panel); }
+  & .ring strong { color: var(--dash-text); font-size: 32px; }
+  & .ring small { color: var(--dash-muted); font-size: 10px; letter-spacing: 0; text-transform: none; }
+  & .progressLegend { margin-top: auto; flex-wrap: wrap; border-color: var(--dash-line); }
+  & .progressLegend span { font-size: 11px; color: var(--dash-muted); }
+  & .timelinePanel { margin-top: 22px; }
+  & .timelineIntro, & .emptyState p { color: var(--dash-muted); font-size: 13px; line-height: 1.6; }
+  & .timeline { list-style: none; padding: 0; margin: 16px 0 0; }
+  & .deadlineTask { display: grid; grid-template-columns: 110px 18px minmax(0,1fr) auto; gap: 16px; align-items: center; width: 100%; padding: 16px 8px; background: transparent; border: 0; border-top: 1px solid var(--dash-line); color: var(--dash-text); text-align: left; cursor: pointer; border-radius: 8px; transition: background .18s; }
+  & .deadlineTask:hover { background: var(--dash-hover); }
+  & .deadlineTask time { font-size: 12px; font-weight: 650; }
+  & .deadlineTask time small { display: block; font-size: 11px; font-weight: 500; color: var(--dash-muted); margin-top: 5px; }
+  & .timelineDot { width: 9px; height: 9px; background: var(--dash-accent); border-radius: 50%; box-shadow: 0 0 0 5px var(--dash-hover); position: relative; }
+  & .timeline li:not(:last-child) .timelineDot::after { content: ''; position: absolute; top: 16px; bottom: -65px; width: 1px; left: 4px; background: var(--dash-line); }
+  & .overdue time small { color: #d38969; font-weight: 700; }
+  & .overdue .timelineDot { background: #d38969; }
+}
+@media(max-width:1250px) { :global(#root) .shell .statsGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } :global(#root) .shell .hero { flex-wrap: wrap; } }
+@media(max-width:950px) { :global(#root) .shell .lowerGrid { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:480px) {
+  :global(#root) .shell {
+    & .hero { padding: 22px; }
+    & .statCard { padding: 19px 16px; grid-template-columns: minmax(0,1fr); }
+    & .statIcon { grid-column: 1; grid-row: auto; margin-bottom: 12px; }
+    & .statCard > strong { font-size: 34px; }
+    & .statCard > small { grid-column: 1; }
+    & .tasksPanel, & .progressPanel, & .timelinePanel { padding: 18px; }
+    & .panelHeader { flex-wrap: wrap; gap: 10px; }
+    & .taskRow { grid-template-columns: auto minmax(0,1fr) auto; gap: 9px; }
+    & .status { grid-column: 2; justify-self: start; grid-row: 2; max-width: 100%; }
+    & .taskRow > svg { grid-column: 3; grid-row: 1; }
+    & .deadlineTask { grid-template-columns: 76px 10px minmax(0,1fr); gap: 10px; }
+    & .deadlineTask > svg { display: none; }
+  }
+}
+@media(prefers-reduced-motion:reduce) { :global(#root) .shell button { transition: none; } }
+
+/* Overview uses the same navigation and content offset as every workspace page. */
+.shell { display:block; padding-left:var(--workspace-nav-width,248px); transition:padding-left .3s cubic-bezier(.22,1,.36,1); }
+@media(max-width:760px) { .shell { padding-left:0; } }
+@media(prefers-reduced-motion:reduce) { .shell { transition:none; } }

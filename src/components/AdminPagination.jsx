@@ -1,0 +1,2 @@
+import styles from '../pages/AdminPanel.module.css'
+export function Pagination({ count, page, pages, onChange }) { return <div className={styles.pagination}><span>{count} result(s) · Page {page + 1} of {pages}</span><div><button disabled={page === 0} onClick={() => onChange(page - 1)}>← Previous</button><button disabled={page >= pages - 1} onClick={() => onChange(page + 1)}>Next →</button></div></div> }

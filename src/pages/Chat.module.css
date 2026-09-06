@@ -529,3 +529,141 @@
 .chatContainer{background:radial-gradient(circle at 78% 0,#202a38,transparent 30%),linear-gradient(145deg,#0e1116,#060709);color:#edf2f6}.header{background:linear-gradient(145deg,#ffffff0d,#ffffff06);border:1px solid #ffffff14;box-shadow:0 18px 45px #00000045,inset 0 1px #ffffff0c;backdrop-filter:blur(28px) saturate(130%)}.header h1,.chatTop h2,.usersSidebar h2,.chatAreaHeader h2{color:#f0f3f6}.subtitle,.modeInfo{color:#7f8995}.backBtn{background:#ffffff08;color:#a9bedb;border:1px solid #ffffff14}.backBtn:hover{background:#ffffff12}.teamChat,.directMessagesContainer{background:linear-gradient(145deg,#ffffff0c,#ffffff05);border:1px solid #ffffff14;box-shadow:0 20px 50px #0000004d,inset 0 1px #ffffff0b;backdrop-filter:blur(26px) saturate(125%)}.chatTop,.chatAreaHeader,.usersSidebar{background:#ffffff05;border-color:#ffffff0d}.messageListContainer{background:#05070a4d}.message{background:#ffffff0a;border:1px solid #ffffff0c}.ownMessage{background:#5f7fa926;border-color:#7696bd38}.sender,.messageBody,.userName{color:#e1e7ed}.time,.userStatus,.typingIndicator{color:#737e8a}.messageForm{background:#ffffff05;border-color:#ffffff0d}.messageInput{background:#05070a99!important;border-color:#ffffff17!important;color:#eef2f6!important}.messageInput:focus{background:#070a0e!important;border-color:#718aad!important;box-shadow:0 0 0 3px #718aad20}.sendBtn{background:linear-gradient(180deg,#5d7597,#415776)}.sendBtn:hover{background:#6983a6}.userOption{background:transparent}.userOption:hover{background:#ffffff08}.userOption.selected{background:#5f7fa921;border-color:#718aad}.userIcon{background:linear-gradient(135deg,#9eb4d0,#607998)}.modeToggle{background:#ffffff08}.modeBtn{color:#85909c}.modeBtn.active{background:#5f7fa9;color:#fff}
 .userOption{width:100%;border:1px solid transparent;color:inherit;text-align:left}.userInfo{display:flex;flex-direction:column}.chatError{margin:0 0 10px;padding:10px 13px;border:1px solid #d56d6340;border-radius:9px;background:#a832291f;color:#ffaaa1;font-size:12px}
 .chatContainer{height:100svh;padding:38px clamp(18px,4vw,60px);box-sizing:border-box;gap:18px}.header{padding:0;background:transparent;border:0;box-shadow:none;backdrop-filter:none}.kicker{color:#8299b6;font-size:10px;font-weight:800;letter-spacing:.15em}.headerLeft h1{font-size:30px;letter-spacing:-.04em;margin-top:6px}.modeToggle{padding:6px;align-self:flex-end;border:1px solid #ffffff12;border-radius:12px;background:#ffffff07;box-shadow:none}.modeBtn{min-width:0;padding:9px 13px;border:0;font-size:11px}.modeBtn i{font-style:normal;margin-left:5px;padding:2px 5px;border-radius:5px;background:#ffffff10}.main{padding:0}.teamChat,.directMessagesContainer,.decisionLog{max-width:1180px;width:100%;margin:auto}.teamChat{min-height:0}.chatTop{padding:17px 22px}.chatTop h2{font-size:16px}.messageList{width:min(760px,100%);margin:0 auto;box-sizing:border-box;padding:26px}.message{max-width:78%;display:flex;gap:10px;padding:0;border:0!important;background:transparent!important;align-self:flex-start}.message.ownMessage{flex-direction:row-reverse;align-self:flex-end}.messageAvatar{width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:linear-gradient(135deg,#9db3cf,#58718f);display:grid;place-items:center;font-size:11px;font-weight:800;color:#0b0e13}.messageContent{min-width:170px;padding:11px 13px;border:1px solid #ffffff0d;border-radius:4px 13px 13px 13px;background:#ffffff08}.ownMessage .messageContent{border-radius:13px 4px 13px 13px;background:#55739732}.messageTools{display:flex;gap:4px;margin-top:8px;opacity:.2;transition:.2s}.message:hover .messageTools{opacity:1}.messageTools button{border:0;background:transparent;color:#8392a3;font-size:9px;cursor:pointer;padding:2px 4px}.messageTools button:hover{color:#b9cbe0}.messageForm{width:min(800px,100%);align-self:center;box-sizing:border-box;border:1px solid #ffffff12;border-radius:14px;margin:0 0 16px;padding:7px;background:#05070aa8}.messageForm input{border:0!important;background:transparent!important}.sendBtn{min-width:74px;padding:9px 14px}.decisionLog{flex:1;display:flex;flex-direction:column;overflow:hidden;border:1px solid #ffffff14;border-radius:17px;background:linear-gradient(145deg,#ffffff0c,#ffffff05)}.decisionList{padding:22px;overflow:auto;display:grid;gap:11px}.decisionList article{display:grid;grid-template-columns:36px 1fr auto;gap:13px;padding:17px;border:1px solid #ffffff10;border-radius:13px;background:#ffffff06}.decisionList article>i{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#8f7eae25;color:#b6a5d0;font-style:normal}.decisionList span{font-size:9px;letter-spacing:.14em;color:#9c89b8}.decisionList h3{margin:5px 0;font-size:15px}.decisionList p{margin:0 0 8px}.decisionList small{color:#6f7d8b}.decisionList article>button{border:0;background:transparent;color:#7d8894;font-size:20px;cursor:pointer}@media(max-width:700px){.chatContainer{height:auto;padding:24px 14px}.header{align-items:flex-start}.modeToggle{width:100%;overflow:auto}.modeBtn{white-space:nowrap}.message{max-width:92%}.directMessagesContainer{grid-template-columns:1fr}.usersSidebar{max-height:160px}}
+
+/* Conversation hierarchy: quiet metadata, opaque bubbles, anchored composer. */
+.chatContainer { min-height: 0; }
+.main, .directMessagesContainer, .chatArea, .messageListContainer, .decisionLog { min-height: 0; min-width: 0; }
+.chatTop, .chatAreaHeader { flex-shrink: 0; }
+.messageList { gap: 22px; }
+.messageStack { min-width: 0; }
+.messageAvatar { margin-top: 23px; }
+.messageHeader { justify-content: flex-start; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 6px; }
+.sender, .time { color: #a3afbd; font-size: 11px; font-weight: 400; }
+.ownMessage .messageHeader { justify-content: flex-end; }
+.messageContent { min-width: 0; padding: 12px 15px; background: rgba(37, 42, 49, .92); border-color: #ffffff20; box-shadow: 0 3px 10px #00000018; }
+.ownMessage .messageContent { background: rgba(49, 76, 112, .94); border-color: #97b9e044; }
+.messageBody { color: #f0f3f7; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.messageTools { opacity: 1; flex-wrap: wrap; }
+.messageTools button { color: #b0bfd0; font-size: 11px; min-height: 26px; }
+.message:focus { outline: 2px solid #91c5ff; outline-offset: 6px; border-radius: 8px; }
+.chatContainer button:focus-visible, .chatContainer a:focus-visible { outline: 2px solid #91c5ff; outline-offset: 3px; }
+.messageForm { position: sticky; bottom: 0; z-index: 1; flex: 0 0 auto; width: 100%; align-self: stretch; margin: 0; padding: 14px 20px; border: 0; border-top: 1px solid #ffffff26; border-radius: 0; background: rgba(13, 18, 25, .96); }
+.messageInput { min-width: 0; }
+.usersSidebar { background: rgba(14, 20, 29, .94); border-color: #ffffff20; }
+.userOption { position: relative; min-height: 62px; }
+.userOption:hover { background: #ffffff0e; }
+.userOption.selected { background: #35577c; border-color: #88b8ee66; box-shadow: inset 3px 0 #91c5ff, 0 0 14px #6da9ee18; }
+.userOption.selected .userName { color: #fff; }
+.statusDot { border-color: #131c28; width: 11px; height: 11px; }
+.statusDot.offline { background: #8995a5; box-shadow: none; }
+.headerInfo { justify-content: flex-start; }
+.decisionList { grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); align-content: start; gap: 18px; flex: 1; }
+.decisionList .decisionCard { display: flex; flex-direction: column; gap: 18px; padding: 22px; border: 1px solid #ffffff24; background: #202936; border-radius: 12px; box-shadow: 0 8px 24px #00000024; min-width: 0; }
+.decisionCardHeader { display: flex; justify-content: space-between; align-items: center; }
+.decisionCardHeader span { display: flex; align-items: center; gap: 9px; color: #b8cce5; font-size: 10px; letter-spacing: .12em; }
+.decisionCardHeader svg { width: 18px; height: 18px; }
+.decisionCardHeader button { border: 0; background: transparent; color: #aebacc; cursor: pointer; font-size: 22px; padding: 4px 8px; }
+.decisionList h3 { color: #f0f4fa; font-size: 18px; line-height: 1.5; margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.decisionMeta { display: flex; flex-wrap: wrap; gap: 16px 28px; margin: auto 0 0; }
+.decisionMeta dt { color: #a6b3c4; font-size: 11px; margin-bottom: 5px; }
+.decisionMeta dd { color: #e0e8f3; font-size: 13px; margin: 0; overflow-wrap: anywhere; }
+.decisionCard footer { border-top: 1px solid #ffffff18; padding-top: 14px; }
+.decisionCard a { color: #aad0ff; font-size: 12px; text-underline-offset: 4px; }
+.decisionList small { color: #a6b3c4; line-height: 1.6; }
+.decisionEmpty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 290px; padding: 28px; border: 1px dashed #ffffff25; border-radius: 12px; background: #151d288c; }
+.decisionEmpty > svg { width: 54px; height: 54px; color: #b6c8de; opacity: .4; margin-bottom: 20px; }
+.decisionEmpty p { font-size: 16px; line-height: 1.6; color: #c0ccda; max-width: 390px; margin: 10px 0; }
+:global(:root[data-theme="light"]) .messageContent { background: #f6f9fd; }
+:global(:root[data-theme="light"]) .ownMessage .messageContent { background: #d8e9ff !important; }
+:global(:root[data-theme="light"]) .messageBody { color: #20324b; }
+:global(:root[data-theme="light"]) .sender, :global(:root[data-theme="light"]) .time { color: #5c6d84; }
+:global(:root[data-theme="light"]) .messageTools button { color: #49617f; }
+:global(:root[data-theme="light"]) .messageForm { background: #e4ebf4; border-color: #bccbdd; }
+:global(:root[data-theme="light"]) .usersSidebar { background: #dce5f0; }
+:global(:root[data-theme="light"]) .userOption.selected { background: #bed8f7; box-shadow: inset 3px 0 #2878d0; }
+:global(:root[data-theme="light"]) .userName, :global(:root[data-theme="light"]) .chatContainer h2 { color: #20324b; }
+:global(:root[data-theme="light"]) .decisionCard, :global(:root[data-theme="light"]) .decisionEmpty { background: #f6f9fd; border-color: #c5d4e5; }
+:global(:root[data-theme="light"]) .decisionList h3, :global(:root[data-theme="light"]) .decisionMeta dd { color: #20324b; }
+:global(:root[data-theme="light"]) .decisionEmpty p, :global(:root[data-theme="light"]) .decisionList small, :global(:root[data-theme="light"]) .decisionMeta dt { color: #5c6d84; }
+:global(:root[data-theme="light"]) .decisionCard a, :global(:root[data-theme="light"]) .decisionCardHeader span { color: #245f9d; }
+@media (max-width: 700px) {
+  .chatContainer { height: 100svh; min-height: 540px; padding: 20px 14px; }
+  .header { flex-direction: column; gap: 14px; }
+  .modeToggle { flex-direction: row; box-sizing: border-box; }
+  .directMessagesContainer { grid-template-rows: auto minmax(0, 1fr); max-height: none; }
+  .usersSidebar { max-height: 150px; padding: 12px; }
+  .usersSidebar h2 { margin-bottom: 10px; }
+  .messageList { padding: 18px 12px; }
+  .message { max-width: 96%; }
+  .messageForm { padding: 12px; gap: 8px; }
+  .decisionList { padding: 14px; }
+}
+
+/* Shared hub frame: workspace navigation lives outside this two-column grid. */
+.hubShell { --hub-muted: #a3afbd; flex: 1; min-height: 0; width: 100%; max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #ffffff26; border-radius: 18px; background: rgba(25, 33, 44, .62); backdrop-filter: blur(32px) saturate(130%); box-shadow: 0 24px 64px #00000035, inset 0 1px #ffffff16; }
+.hubTop { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; flex-shrink: 0; border-bottom: 1px solid #ffffff20; background: #18212b94; }
+.hubTitle { color: #c8d4e3; font-size: 13px; font-weight: 600; }
+.hubTop .modeToggle { align-self: auto; margin-left: auto; flex-direction: row; width: auto; padding: 4px; gap: 4px; }
+.hubTop .modeBtn { font-size: 12px; min-height: 36px; }
+.hubTop .modeBtn.active { background: #96c7ff; color: #10263f; box-shadow: 0 2px 12px #68aaff30; }
+.hubGrid { flex: 1; min-height: 0; display: grid; grid-template-columns: 238px minmax(0, 1fr); }
+.hubGrid .usersSidebar { min-height: 0; padding: 20px 12px; background: rgba(13, 20, 29, .88); }
+.hubGrid .usersSidebar h2 { font-size: 10px; letter-spacing: .13em; color: var(--hub-muted); margin: 0 10px 12px; }
+.hubGrid .usersSidebar .navHeading { margin-top: 28px; }
+.hubGrid .userOption { padding: 10px; gap: 10px; }
+.hubGrid .userInfo small { color: #b2bfce; font-size: 10px; line-height: 1.5; margin-top: 3px; }
+.navSymbol { width: 36px; text-align: center; font-size: 24px; color: #acd0f8; }
+.navHint { font-size: 12px; color: var(--hub-muted); padding: 0 10px; }
+.timelineNav { margin-top: 24px; padding: 12px; width: 100%; background: #ffffff08; color: #b6d7ff; border: 1px solid #ffffff1a; border-radius: 8px; font-size: 12px; text-align: left; cursor: pointer; }
+.hubContent { min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.hubContent .teamChat, .hubContent .chatArea, .hubContent .decisionLog { flex: 1; width: 100%; max-width: none; margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; backdrop-filter: none; }
+.hubContent .chatError { flex-shrink: 0; margin: 8px; }
+.hubContent .messageList { width: 100%; max-width: 1000px; }
+.hubContent .messageContent { background: rgba(37, 42, 49, .90); border: 1px solid #ffffff18; box-shadow: inset 0 1px #ffffff25, 0 4px 12px #00000020; }
+.hubContent .ownMessage .messageContent { background: rgba(49, 76, 112, .90); }
+.hubContent .messageForm { position: sticky; bottom: 0; margin-top: auto; background: rgba(12, 18, 26, .96); }
+.systemMessage .messageAvatar { background: #e7b65f; color: #332006; }
+.hubContent .systemMessage .messageContent { background: rgba(66, 47, 24, .96); border-color: #eab96665; }
+.alertLabel { display: block; color: #f5cb83; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.attachments { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 8px; }
+.attachments li { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #ffffff24; border-radius: 8px; background: #0b14285c; }
+.attachments li > span { font-size: 24px; color: #a9c9ed; }
+.attachments li > div { min-width: 0; flex: 1; }
+.attachments strong { display: block; overflow-wrap: anywhere; font-size: 12px; font-weight: 500; }
+.attachments small { display: block; color: #aebed2; font-size: 11px; margin-top: 5px; }
+.attachments a { color: #b6d7ff; flex-shrink: 0; font-size: 11px; }
+.scheduleTags { display: flex; flex-wrap: wrap; gap: 8px; }
+.scheduleTags span { background: #9fcaff18; border: 1px solid #9fcaff30; color: #c0d9f5; padding: 6px 9px; border-radius: 5px; letter-spacing: 0; font-size: 11px; overflow-wrap: anywhere; }
+.decisionControls { display: grid; gap: 10px; }
+.decisionControls label { color: #a6b3c4; font-size: 11px; display: grid; gap: 5px; }
+.decisionControls select { width: 100%; min-width: 0; padding: 8px; border: 1px solid #ffffff26; border-radius: 5px; background: #131c28; color: #e0e8f3; }
+.decisionList .decisionCard > .timelineLink { font-size: 12px; text-align: left; padding: 0; color: #aad0ff; }
+:global(:root[data-theme="light"]) .hubShell { --hub-muted: #53677f; background: #edf3fac9; border-color: #b9cce0; }
+:global(:root[data-theme="light"]) .hubTop { background: #e8eff8c9; border-color: #bccbdd; }
+:global(:root[data-theme="light"]) .hubTitle { color: #29415e; }
+:global(:root[data-theme="light"]) .hubGrid .usersSidebar { background: #d4dfedeb; }
+:global(:root[data-theme="light"]) .hubGrid .userInfo small { color: #4b637f; }
+:global(:root[data-theme="light"]) .hubContent .messageContent { background: #f6f9fd; }
+:global(:root[data-theme="light"]) .hubContent .systemMessage .messageContent { background: #fff0d6 !important; border-color: #d8a557 !important; }
+:global(:root[data-theme="light"]) .alertLabel { color: #80500c; }
+:global(:root[data-theme="light"]) .hubContent .messageForm { background: #e4ebf4; }
+:global(:root[data-theme="light"]) .navSymbol, :global(:root[data-theme="light"]) .timelineNav, :global(:root[data-theme="light"]) .decisionList .timelineLink { color: #245f9d; }
+:global(:root[data-theme="light"]) .scheduleTags span { background: #dfecfb; color: #295682; border-color: #b4cce6; }
+:global(:root[data-theme="light"]) .attachments li { background: #e4edf8; border-color: #bdcfe3; }
+:global(:root[data-theme="light"]) .attachments small, :global(:root[data-theme="light"]) .attachments a { color: #436388; }
+@media (max-width: 1100px) { .chatContainer { padding: 24px 18px; } .hubGrid { grid-template-columns: 200px minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .hubTop { padding: 10px; }
+  .hubTitle { display: none; }
+  .hubTop .modeToggle { width: 100%; }
+  .hubTop .modeBtn { flex: 1; padding: 8px; }
+  .hubGrid { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .hubGrid .usersSidebar { display: flex; align-items: center; gap: 8px; overflow-x: auto; max-height: none; padding: 10px; border-right: 0; border-bottom: 1px solid #ffffff20; }
+  .hubGrid .usersSidebar h2, .hubGrid .userInfo small, .timelineNav { display: none; }
+  .hubGrid .usersList { flex-direction: row; }
+  .hubGrid .userOption { width: auto; flex-shrink: 0; min-height: 48px; }
+  .hubGrid .userIcon { width: 28px; height: 28px; font-size: 12px; }
+  .hubGrid .navSymbol { width: 20px; }
+  .hubContent .message { max-width: 100%; }
+  .hubContent .messageAvatar { display: none; }
+}

@@ -40,12 +40,12 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={styles.card}
+      className={`${styles.card} ${isDragging ? styles.dragging : ''}`}
       {...attributes}
       {...listeners}
     >
       <div className={styles.cardContent}>
-        <div className={styles.badges}>
+        <div className={styles.badges}>{task.milestone && <span className={styles.badgeType}>◇ Milestone</span>}
           {task.priority && <span className={styles.badge}>{priorityBadge[task.priority]} {task.priority}</span>}
           {task.type && <span className={styles.badgeType}>{task.type}</span>}
           {task.assignmentLocked && <span className={styles.badge} title={canChange ? 'Assigned exclusively to you' : `Locked to ${task.assignee}`}>🔒 {canChange && user?.role !== 'Admin' ? 'Your task' : task.assignee}</span>}
@@ -67,34 +67,23 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
       </div>
 
       {/* Compact action menu: single affordance + hover-revealed secondary actions */}
-      {canChange && <div className={styles.actions}>
-        <button
-          className={styles.menuBtn}
-          title="Actions"
-          onPointerDown={(e) => e.stopPropagation()}
-          aria-label="Open actions"
-        >
-          ⋮
-        </button>
-
+      {canChange && onEdit && onDelete && <div className={styles.actions} onKeyDown={e=>e.stopPropagation()}>
         <div className={styles.secondary}>
           <button
             className={styles.actionBtn}
             title="Edit task"
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              onEdit(task, column)
-            }}
+            aria-label={`Edit ${task.title}`}
+            onPointerDown={e=>e.stopPropagation()}
+            onClick={e=>{e.stopPropagation();onEdit(task,column)}}
           >
             ✏️
           </button>
           <button
             className={`${styles.actionBtn} ${styles.delete}`}
             title="Delete task"
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              onDelete(task.id, task.title)
-            }}
+            aria-label={`Delete ${task.title}`}
+            onPointerDown={e=>e.stopPropagation()}
+            onClick={e=>{e.stopPropagation();onDelete(task.id,task.title)}}
           >
             🗑️
           </button>

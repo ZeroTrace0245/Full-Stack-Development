@@ -6,13 +6,13 @@ import styles from './Column.module.css'
 
 function getStatusClass(columnTitle) {
   const title = columnTitle.toLowerCase()
-  if (title.includes('backlog') || title.includes('todo')) return 'status-todo'
-  if (title.includes('dev') || title.includes('doing')) return 'status-doing'
-  if (title.includes('prod') || title.includes('done')) return 'status-done'
+  if (/prod|done|complete|deployed/.test(title)) return 'status-done'
+  if (/dev|doing|progress/.test(title)) return 'status-doing'
+  if (/backlog|to\s?do/.test(title)) return 'status-todo'
   return ''
 }
 
-export default function Column({ column, collapsed, onToggle, onCreateTask, onDeleteTask, onEditTask }) {
+export default function Column({ column, collapsed, onToggle, onCreateTask, onDeleteTask, onEditTask, filtered }) {
   const statusClass = getStatusClass(column.title)
   const columnClass = statusClass ? `${styles.column} ${styles[statusClass]}` : styles.column
 
@@ -55,7 +55,7 @@ export default function Column({ column, collapsed, onToggle, onCreateTask, onDe
           ))}
         </SortableContext>
         {column.tasks.length === 0 && (
-          <p className={styles.emptyState}>No tasks yet. Click + to add one!</p>
+          <div className={styles.emptyState}><svg viewBox="0 0 48 48" width="42" height="42" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="7" y="8" width="34" height="32" rx="6"/><path d="M15 18h18M15 25h12M15 32h8"/></svg><strong>{filtered ? 'No matching tasks' : 'Ready for your next task'}</strong><p>{filtered ? 'Try adjusting your search or filters.' : 'Add a task or drag one into this column.'}</p></div>
         )}
       </div>}
     </div>
