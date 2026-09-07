@@ -45,8 +45,8 @@ Main API groups are available under `/api/auth`, `/api/tasks`, and `/api/message
 4. Copy `backend/.env.example` to `backend/.env`, then set:
 
 ```env
-MONGODB_URI=mongodb+srv://YOUR_USERNAME:YOUR_URL_ENCODED_PASSWORD@YOUR_CLUSTER.mongodb.net/?retryWrites=true&w=majority
-MONGODB_DB_NAME=novasync
+MONGODB_URI=
+MONGODB_DB_NAME=
 ```
 
 Do not commit `backend/.env`; it is ignored by Git. Start the project with `npm run dev`. A successful backend startup prints `Connected to MongoDB: novasync`. If `MONGODB_URI` is absent, NovaSync continues to use `backend/data/local-store.json`.
