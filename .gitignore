@@ -19,6 +19,13 @@ backend/data/local-store.json
 backend/data/local-store.json.tmp
 backend/data/sync-state.json
 
+# Local AI provider settings and any exported token vaults
+backend/.env.chat.local
+*.token-vault.json
+# Atlas credentials and connection screenshots
+docs/screenshots/Atlas connections/Connection string.png
+docs/screenshots/final design/Atlas connection.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
