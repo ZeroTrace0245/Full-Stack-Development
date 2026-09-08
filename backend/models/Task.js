@@ -2,6 +2,10 @@ import mongoose from 'mongoose'
 
 const taskSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true }, description: { type: String, default: '' },
+  descriptionHtml: { type: String, default: '' },
+  startDate: { type: String, default: '' }, endDate: { type: String, default: '' },
+  blockedBy: { type: [String], default: [] }, blocking: { type: [String], default: [] },
+  milestone: { type: Boolean, default: false },
   boardId: { type: String, default: 'board-1', index: true }, columnId: { type: String, required: true },
   assignee: { type: String, default: '' }, priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
   type: { type: String, enum: ['Feature', 'Bug', 'UI'], default: 'Feature' }, dueDate: { type: String, default: '' },
