@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { BoardProvider, useBoard } from './context/BoardContext'
 import LoginPage from './pages/LoginPage'
@@ -6,7 +6,6 @@ import Dashboard from './pages/Dashboard'
 import Board from './components/Board'
 import Modal from './components/Modal'
 import TaskForm from './components/TaskForm'
-import ConfirmDialog from './components/ConfirmDialog'
 import ActivityFeed from './components/ActivityFeed'
 import TeamMembers from './pages/TeamMembers'
 import Reports from './pages/Reports'
@@ -16,6 +15,7 @@ import AdminPanel from './pages/AdminPanel'
 import AdminLoginPage from './pages/AdminLoginPage'
 import UserSettings from './pages/UserSettings'
 import NotificationCenter from './components/NotificationCenter'
+import SessionTransition from './components/SessionTransition'
 import styles from './App.module.css'
 
 function WorkspacePage({ children }) {
@@ -25,12 +25,18 @@ function WorkspacePage({ children }) {
 function AppContent() {
   const { isLoggedIn, isLoading, currentPage, goToDashboard, user } = useAuth()
   const { board, handleCreateTask, handleEditTask, handleDeleteTask } = useBoard()
+  const taskDirty = useRef(false)
+  const closeTask = () => {
+    if (taskBusy.current) return
+    if (taskDirty.current && !window.confirm("Close with unsaved changes? Your draft will remain on this device.")) return
+    taskDirty.current = false; setIsModalOpen(false); setEditingTask(null); setSelectedColumn(null)
+  }
+  const taskBusy = useRef(false)
   const [showActivity, setShowActivity] = useState(false)
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedColumn, setSelectedColumn] = useState(null)
   const [editingTask, setEditingTask] = useState(null)
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   const handleCreateTaskClick = (column) => {
     setEditingTask(null)
@@ -45,14 +51,9 @@ function AppContent() {
   }
 
   const handleDeleteTaskClick = (taskId, taskTitle) => {
-    setDeleteConfirm({ taskId, taskTitle })
+    handleDeleteTask(taskId, taskTitle)
   }
 
-  const handleConfirmDelete = async () => {
-    if (!deleteConfirm) return
-    await handleDeleteTask(deleteConfirm.taskId, deleteConfirm.taskTitle)
-    setDeleteConfirm(null)
-  }
 
   const onSubmitTask = async (taskData) => {
     if (editingTask) {
@@ -123,37 +124,20 @@ function AppContent() {
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingTask(null)
-          setSelectedColumn(null)
-        }}
+        onClose={closeTask}
         title={editingTask ? 'Edit Task' : 'Create Task'}
       >
         <TaskForm
+          onDirtyChange={dirty=>{taskDirty.current=dirty}}
+          onBusyChange={busy=>{taskBusy.current=busy}}
           columns={board.columns}
           selectedColumn={selectedColumn}
           onSubmit={onSubmitTask}
-          onCancel={() => {
-            setIsModalOpen(false)
-            setEditingTask(null)
-            setSelectedColumn(null)
-          }}
+          onCancel={closeTask}
           editingTask={editingTask}
         />
       </Modal>
 
-      <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        title="Delete Task"
-        message="This task and its subtasks and comments will be permanently removed from your board."
-        taskName={deleteConfirm?.taskTitle}
-        confirmText="Delete Task"
-        cancelText="Cancel"
-        isDangerous={true}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteConfirm(null)}
-      />
     </div></WorkspacePage>
   )
 }
@@ -163,7 +147,7 @@ function App() {
     <AuthProvider>
       <NotificationCenter />
       <BoardProvider>
-        <AppContent />
+        <SessionTransition><AppContent /></SessionTransition>
       </BoardProvider>
     </AuthProvider>
   )
