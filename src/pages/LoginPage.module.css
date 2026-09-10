@@ -1,4 +1,4 @@
-.authCanvas { min-height:100svh; width:100%; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); background:linear-gradient(rgba(0,0,0,.13),rgba(0,0,0,.13)),url('../../docs/background/mica-dark.png') center/cover fixed; color:#f1f6ff; font-family:'DM Sans','Segoe UI',sans-serif; text-align:left; }
+.authCanvas { min-height:100svh; width:100%; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr); background:linear-gradient(rgba(0,0,0,.13),rgba(0,0,0,.13)),url('../../docs/Background/mica-dark.png') center/cover fixed; color:#f1f6ff; font-family:'DM Sans','Segoe UI',sans-serif; text-align:left; }
 .marketing { padding:36px clamp(30px,5vw,80px); display:flex; flex-direction:column; gap:28px; min-width:0; }
 .brand { display:flex; gap:12px; align-items:center; font-size:21px; font-weight:750; }.brand b { color:#b2d0f6; }
 .brandMark { width:28px;height:28px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;align-items:end;transform:skew(-8deg); }.brandMark i {background:#b2d0f6;border-radius:2px;}.brandMark i:nth-child(1){height:14px}.brandMark i:nth-child(2){height:25px}.brandMark i:nth-child(3){height:19px}
