@@ -1,51 +1,33 @@
 {
-  "name": "react",
-  "description": "React is a JavaScript library for building user interfaces.",
-  "keywords": [
-    "react"
-  ],
-  "version": "19.2.8",
-  "homepage": "https://react.dev/",
-  "bugs": "https://github.com/react/react/issues",
-  "license": "MIT",
-  "files": [
-    "LICENSE",
-    "README.md",
-    "index.js",
-    "cjs/",
-    "compiler-runtime.js",
-    "jsx-runtime.js",
-    "jsx-runtime.react-server.js",
-    "jsx-dev-runtime.js",
-    "jsx-dev-runtime.react-server.js",
-    "react.react-server.js"
-  ],
-  "main": "index.js",
-  "exports": {
-    ".": {
-      "react-server": "./react.react-server.js",
-      "default": "./index.js"
-    },
-    "./package.json": "./package.json",
-    "./jsx-runtime": {
-      "react-server": "./jsx-runtime.react-server.js",
-      "default": "./jsx-runtime.js"
-    },
-    "./jsx-dev-runtime": {
-      "react-server": "./jsx-dev-runtime.react-server.js",
-      "default": "./jsx-dev-runtime.js"
-    },
-    "./compiler-runtime": {
-      "react-server": "./compiler-runtime.js",
-      "default": "./compiler-runtime.js"
-    }
+  "name": "novasync",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "dev:frontend": "vite",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/react/react.git",
-    "directory": "packages/react"
+  "dependencies": {
+    "@dnd-kit/core": "^6.1.6",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "axios": "^1.6.2",
+    "dotenv": "^17.4.2",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.9.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "socket.io-client": "^4.6.1"
   },
-  "engines": {
-    "node": ">=0.10.0"
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "vite": "^8.2.0"
   }
 }
