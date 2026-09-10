@@ -31,7 +31,6 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      # These checks run only when the corresponding package script exists.
       - name: Lint
         run: npm run lint
 
@@ -40,6 +39,12 @@ jobs:
 
       - name: Test
         run: node --test src/pages/dashboardData.test.js src/utils/moveBoardTask.test.js src/utils/taskTools.test.js
+
+      - name: Install backend for production serving test
+        run: npm ci --prefix backend --omit=dev
+
+      - name: Test production homepage and API routing without Atlas
+        run: node --test backend/config/frontend.test.js
 
   backend:
     runs-on: ubuntu-latest

@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { connectDatabase, closeDatabase } from './config/database.js';
+import { serveFrontend } from './config/frontend.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -17,7 +18,7 @@ dotenv.config({ path: fileURLToPath(new URL('.env', import.meta.url)) });
 
 const app = express();
 const httpServer = createServer(app);
-const configuredOrigins = (process.env.SOCKET_IO_CORS || 'http://localhost:54995').split(',').map(origin => origin.trim());
+const configuredOrigins = [...(process.env.SOCKET_IO_CORS || 'http://localhost:54995').split(','), process.env.RENDER_EXTERNAL_URL].filter(Boolean).map(origin => origin.trim().replace(/\/$/, ''));
 const isAllowedOrigin = (origin) => !origin || configuredOrigins.includes(origin) || /^http:\/\/(?:(?:10(?:\.\d{1,3}){3})|(?:192\.168(?:\.\d{1,3}){2})|(?:172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})):54995$/.test(origin);
 const corsOrigin = (origin, callback) => callback(null, isAllowedOrigin(origin));
 const io = new Server(httpServer, {
@@ -46,6 +47,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+if (process.env.NODE_ENV === 'production') {
+  serveFrontend(app, fileURLToPath(new URL('../dist/', import.meta.url)));
+}
 
 // Socket.IO Connection Handling
 const connectedUsers = new Map(); // { userId: socketId }
