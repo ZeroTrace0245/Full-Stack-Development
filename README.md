@@ -3,8 +3,15 @@
 
 [![Node CI](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)
 [![Render hosting status](https://img.shields.io/website?url=https%3A%2F%2Ffull-stack-development-n0qo.onrender.com%2F&label=Render%20hosting&up_message=online&up_color=brightgreen&down_message=unavailable&down_color=red)](https://full-stack-development-n0qo.onrender.com/)
+[![Render deployment evidence](https://img.shields.io/badge/Render%20deploy-recorded%20success-brightgreen)](#hosting-evidence)
+[![Atlas connection evidence](https://img.shields.io/badge/Atlas-recorded%20connection-brightgreen)](#hosting-evidence)
+[![Final screenshots](https://img.shields.io/badge/Final%20Deployment-27%20screenshots-brightgreen)](#68-final-deployment-design)
 
-**[Open NovaSync](https://full-stack-development-n0qo.onrender.com/)** · **[CI runs](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)** · **[Deployment instructions](DEPLOYMENT.md)** · **[Final Final design gallery](#68-final-final-design)** · **[Hosting screenshots](#hosting-evidence)** · **[Local setup](#12-setup-and-execution)**
+**[Open final deployment](https://full-stack-development-n0qo.onrender.com/)** · **[CI runs](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)** · **[Deployment instructions](#cicd-and-hosting)** · **[Final Deployment design gallery](#68-final-deployment-design)** · **[Hosting screenshots](#hosting-evidence)** · **[Local setup](#12-setup-and-execution)**
+
+**Final deployment and hosting URL:** https://full-stack-development-n0qo.onrender.com/
+
+The green deployment, Atlas, and screenshot badges summarize the supplied evidence. The Node CI and Render hosting badges above are dynamic status checks.
 
 The CI badge turns green when the `main` workflow passes. The hosting badge turns
 green when the homepage responds successfully; it does not verify login, messaging,
@@ -12,9 +19,11 @@ or Atlas synchronization. Render Free can sleep between visits, so a cold start
 may temporarily show unavailable. Status badges reflect their providers' latest
 checks and may be cached. See [Shields website status behavior](https://shields.io/badges/website).
 
-NovaSync is a task and team collaboration platform with Kanban and timeline views, real-time messaging, and dedicated user and administrator workspaces. This report presents the **Final Final** interface, the development history, and the supplied deployment evidence.
+NovaSync is a task and team collaboration platform with Kanban and timeline views, real-time messaging, and dedicated user and administrator workspaces. This report presents the **Final Deployment** interface, the development history, and the supplied deployment evidence.
 
-![NovaSync Final Final user overview with sidebar navigation](<docs/screenshots/Final Final/User overview with the NavBar.png>)
+**Report navigation:** [Objectives](#2-project-objectives) · [Technology](#3-technology-stack) · [Architecture](#4-system-architecture) · [Original screenshots](#5-original-version) · [Final interface](#68-final-deployment-design) · [Backend and API](#8-backend-implementation) · [API testing](#11-api-testing-evidence) · [Limitations](#13-strengths-and-current-limitations) · [Screenshot archive](#15-screenshot-evidence-index-and-previous-design-gallery)
+
+![NovaSync Final Deployment user overview with sidebar navigation](<docs/screenshots/Final Final/User overview with the NavBar.png>)
 
 ### CI/CD and hosting
 
@@ -22,6 +31,24 @@ GitHub Actions installs both npm applications, lints the source, builds the Vite
 frontend, runs the existing frontend unit tests, checks backend JavaScript syntax,
 and tests production homepage/client-route serving while preserving API responses.
 CI does not connect to the live Atlas database.
+
+#### CLI pipeline and green-light evidence
+
+The [Node CI workflow](.github/workflows/ci.yml) runs on pushes and pull requests to `main`, and can also be started manually. Its two jobs use Node.js 24 on Ubuntu. A green workflow result means all required steps in both jobs completed successfully.
+
+| Check | Command or evidence | What the green light confirms |
+|---|---|---|
+| Frontend dependencies | `npm ci` | Lockfile-based dependency installation completed |
+| Lint | `npm run lint` | Oxlint completed successfully |
+| Production build | `npm run build` | Vite generated the production frontend |
+| Frontend unit tests | `node --test src/pages/dashboardData.test.js src/utils/moveBoardTask.test.js src/utils/taskTools.test.js` | The selected dashboard and task utility tests passed |
+| Production serving | `node --test backend/config/frontend.test.js` | Homepage, client-route fallback, and API routing tests passed without Atlas |
+| Backend dependencies and syntax | Backend `npm ci`, followed by `node --check` for each backend JavaScript file | Installation and JavaScript parsing succeeded |
+| Render deployment | ✅ Latest supplied Render screenshot: commit `2c40563` | Render recorded **Deploy succeeded / Live** |
+| Backend CLI startup | ✅ Render logs show the server running and Socket.IO listening | Both startup messages were emitted during the captured deployment |
+| Atlas connection | ✅ Render logs show `Atlas sync connected: novasync` | The backend reported an Atlas connection at capture time |
+
+The workflow screenshot records a successful run for `bc76f4a`; the later deployment screenshot records `2c40563`. They are separate evidence points. The current workflow badge links to subsequent results, and the Atlas log confirms connectivity rather than a record-by-record synchronization test.
 
 One Render Web Service serves the website, REST API, and Socket.IO at the same
 origin. Configure **Auto-Deploy → After CI Checks Pass** to deploy after successful
@@ -39,14 +66,18 @@ GitHub checks.
 Keep `MONGODB_URI`, `MONGODB_DB_NAME`, and `JWT_SECRET` in the service environment.
 Check [API health](https://full-stack-development-n0qo.onrender.com/api/health) for
 `atlas.connected`. Full setup and the existing local-storage/Atlas restart risk
-are documented in [DEPLOYMENT.md](DEPLOYMENT.md). Pushing `render.yaml` does not
+are documented in [Setup and Execution](#12-setup-and-execution) and [Current limitations](#current-limitations). Pushing [render.yaml](render.yaml) does not
 automatically reconfigure an existing manually created service.
 
 ### Hosting evidence
 
 The screenshots captured on **10 September 2026** record the Render deployment and GitHub Actions workflow results for this release.
 
-**Render deployment:** the dashboard shows **Deploy succeeded** for commit `bc76f4a`, a 35-second deployment duration, and the service URL in the startup logs. This deployment was triggered manually through the dashboard.
+**Final hosting evidence:** the latest supplied Render capture shows **Deploy succeeded / Live** for commit `2c40563`, deployed on **10 September 2026 at 5:42:33 PM GMT+5:30**, with a **37.3-second** deployment duration. The manual deployment logs show local storage initialization, the backend listening on port `5000`, Socket.IO startup, `Atlas sync connected: novasync`, and the final public service URL.
+
+![Final Render deployment showing green success, backend CLI startup, Atlas connection, and the public hosting URL](<docs/screenshots/host/Screenshot 2026-09-10 174332.png>)
+
+**Earlier Render deployment:** the dashboard shows **Deploy succeeded** for commit `bc76f4a`, a 35-second deployment duration, and the service URL in the startup logs. This deployment was triggered manually through the dashboard.
 
 ![Render dashboard showing the successful NovaSync deployment and startup logs](<docs/screenshots/host/Screenshot 2026-09-10 at 11-16-54 Full-Stack-Development ・ Web Service ・ Render Dashboard.png>)
 
@@ -158,7 +189,7 @@ The legacy screenshots also record theme and report-display issues that motivate
 
 ## 6. Full-Stack Release and Latest Design Refresh
 
-The screenshots in `Old` show the original prototype. `New` records the first full-stack interface, and `Refrash` records an intermediate refresh (the folder spelling is retained for working links). The newest supplied screenshots are in `final design` and appear in section 6.8. Earlier galleries remain as development history.
+The screenshots in `Old` show the original prototype. `New` records the first full-stack interface, and `Refrash` records an intermediate refresh (the folder spelling is retained for working links). `final design` records the previous design milestone, preserved in section 15. All 27 screenshots of the **Final Deployment** interface appear in section 6.8. Earlier galleries remain as development history.
 
 ### 6.1 Authentication and account security
 
@@ -296,9 +327,9 @@ The gallery below records the supplied refresh images. Screens without replaceme
 
 ![Refreshed task board: filters, focus mode, and activity toggle](<docs/screenshots/Refrash/Task board refrash with Filters and focus mode and a activity toggle.png>)
 
-### 6.8 Final Final design
+### 6.8 Final Deployment design
 
-The latest supplied interface is documented in `docs/screenshots/Final Final`. It uses a dark blue and purple wallpaper, translucent cards, pale-blue actions, and a collapsible sidebar. The user workspace includes Overview, My board, Team, Messages, and Settings; the administrator sidebar also provides Reports and Admin.
+The latest supplied interface is documented in the Final Deployment gallery below. It uses a dark blue and purple wallpaper, translucent cards, pale-blue actions, and a collapsible sidebar. The user workspace includes Overview, My board, Team, Messages, and Settings; the administrator sidebar also provides Reports and Admin.
 
 The overview brings together task totals, recent tasks, overall progress, and upcoming deadlines. The gallery below covers the final user and administrator screens, task forms, collaboration tools, notifications, and Atlas connection indicators. Earlier images in this report document the development stages.
 
@@ -306,73 +337,73 @@ The overview brings together task totals, recent tasks, overall progress, and up
 
 | Login | Create account |
 |---|---|
-| ![Final Final Login](<docs/screenshots/Final Final/Login.png>) | ![Final Final Create account](<docs/screenshots/Final Final/Create.png>) |
+| ![Final Deployment Login](<docs/screenshots/Final Final/Login.png>) | ![Final Deployment Create account](<docs/screenshots/Final Final/Create.png>) |
 
 #### User and administrator overviews
 
 | User overview and navigation | Administrator overview and navigation |
 |---|---|
-| ![Final Final User overview and navigation](<docs/screenshots/Final Final/User overview with the NavBar.png>) | ![Final Final Administrator overview and navigation](<docs/screenshots/Final Final/Admin overview with the NavBar.png>) |
+| ![Final Deployment User overview and navigation](<docs/screenshots/Final Final/User overview with the NavBar.png>) | ![Final Deployment Administrator overview and navigation](<docs/screenshots/Final Final/Admin overview with the NavBar.png>) |
 
 #### Task planning
 
 | Kanban board | Timeline view |
 |---|---|
-| ![Final Final Kanban board](<docs/screenshots/Final Final/My board.png>) | ![Final Final Timeline view](<docs/screenshots/Final Final/My board (Timeline).png>) |
+| ![Final Deployment Kanban board](<docs/screenshots/Final Final/My board.png>) | ![Final Deployment Timeline view](<docs/screenshots/Final Final/My board (Timeline).png>) |
 
-![Final Final Focus mode](<docs/screenshots/Final Final/Focus mod in my board.png>)
+![Final Deployment Focus mode](<docs/screenshots/Final Final/Focus mod in my board.png>)
 
 #### Create and edit tasks
 
 | Create task: part 1 | Create task: part 2 |
 |---|---|
-| ![Final Final Create task: part 1](<docs/screenshots/Final Final/Create task part 1.png>) | ![Final Final Create task: part 2](<docs/screenshots/Final Final/Create task part 2.png>) |
+| ![Final Deployment Create task: part 1](<docs/screenshots/Final Final/Create task part 1.png>) | ![Final Deployment Create task: part 2](<docs/screenshots/Final Final/Create task part 2.png>) |
 
 | Edit task: part 1 | Edit task: part 2 |
 |---|---|
-| ![Final Final Edit task: part 1](<docs/screenshots/Final Final/Edit task part 1.png>) | ![Final Final Edit task: part 2](<docs/screenshots/Final Final/Edit task part 2.png>) |
+| ![Final Deployment Edit task: part 1](<docs/screenshots/Final Final/Edit task part 1.png>) | ![Final Deployment Edit task: part 2](<docs/screenshots/Final Final/Edit task part 2.png>) |
 
 #### Messaging and decisions
 
 | Chat | Decision log |
 |---|---|
-| ![Final Final Chat](<docs/screenshots/Final Final/Chat.png>) | ![Final Final Decision log](<docs/screenshots/Final Final/Decision log.png>) |
+| ![Final Deployment Chat](<docs/screenshots/Final Final/Chat.png>) | ![Final Deployment Decision log](<docs/screenshots/Final Final/Decision log.png>) |
 
 #### Team management
 
 | Team: administrator view | Invite members |
 |---|---|
-| ![Final Final Team: administrator view](<docs/screenshots/Final Final/Teams (ADMIN View).png>) | ![Final Final Invite members](<docs/screenshots/Final Final/Invite members (ADMIN).png>) |
+| ![Final Deployment Team: administrator view](<docs/screenshots/Final Final/Teams (ADMIN View).png>) | ![Final Deployment Invite members](<docs/screenshots/Final Final/Invite members (ADMIN).png>) |
 
-![Final Final Edit member role](<docs/screenshots/Final Final/Edit member role (ADMIN).png>)
+![Final Deployment Edit member role](<docs/screenshots/Final Final/Edit member role (ADMIN).png>)
 
 #### Administrator tools
 
 | Control center | User accounts |
 |---|---|
-| ![Final Final Control center](<docs/screenshots/Final Final/Control center (ADMIN).png>) | ![Final Final User accounts](<docs/screenshots/Final Final/User accounts (ADMIN).png>) |
+| ![Final Deployment Control center](<docs/screenshots/Final Final/Control center (ADMIN).png>) | ![Final Deployment User accounts](<docs/screenshots/Final Final/User accounts (ADMIN).png>) |
 
 | Task security | Message audits |
 |---|---|
-| ![Final Final Task security](<docs/screenshots/Final Final/Task security (ADMIN).png>) | ![Final Final Message audits](<docs/screenshots/Final Final/Message audits (ADMIN).png>) |
+| ![Final Deployment Task security](<docs/screenshots/Final Final/Task security (ADMIN).png>) | ![Final Deployment Message audits](<docs/screenshots/Final Final/Message audits (ADMIN).png>) |
 
-![Final Final Reports](<docs/screenshots/Final Final/Report (ADMIN).png>)
+![Final Deployment Reports](<docs/screenshots/Final Final/Report (ADMIN).png>)
 
 #### Notifications and settings
 
 | Administrator notifications | User notifications |
 |---|---|
-| ![Final Final Administrator notifications](<docs/screenshots/Final Final/Notification (Admin).png>) | ![Final Final User notifications](<docs/screenshots/Final Final/Notification (User).png>) |
+| ![Final Deployment Administrator notifications](<docs/screenshots/Final Final/Notification (Admin).png>) | ![Final Deployment User notifications](<docs/screenshots/Final Final/Notification (User).png>) |
 
-![Final Final Settings](<docs/screenshots/Final Final/Setting page.png>)
+![Final Deployment Settings](<docs/screenshots/Final Final/Setting page.png>)
 
 #### Atlas connection states
 
 | Checking connection | Atlas connected |
 |---|---|
-| ![Final Final Checking connection](<docs/screenshots/Final Final/Checking connection atlas.png>) | ![Final Final Atlas connected](<docs/screenshots/Final Final/Atlas connection.png>) |
+| ![Final Deployment Checking connection](<docs/screenshots/Final Final/Checking connection atlas.png>) | ![Final Deployment Atlas connected](<docs/screenshots/Final Final/Atlas connection.png>) |
 
-![Final Final Atlas disconnected](<docs/screenshots/Final Final/Atlas desconnected.png>)
+![Final Deployment Atlas disconnected](<docs/screenshots/Final Final/Atlas desconnected.png>)
 
 The connection indicators show the checking, connected, and disconnected UI states. They are capture-time evidence; inspect `/api/health` when checking a running instance.
 
@@ -503,13 +534,13 @@ These supplied screenshots record the Atlas project, cluster, connection configu
 
 ![Clusters](<docs/screenshots/Atlas connections/Clusters.png>)
 
-**Connection string**
-
-![Connection string](<docs/screenshots/Atlas connections/Connection string.png>)
-
 **Database**
 
 ![Database](<docs/screenshots/Atlas connections/Database.png>)
+
+**Connection configuration**
+
+![Atlas connection configuration](<docs/screenshots/Atlas connections/Connection string.png>)
 
 **Atlas connection evidence**
 
@@ -581,7 +612,7 @@ The release adds the following protections:
 - Central JSON error responses
 - Graceful server shutdown
 
-Before production deployment, the example JWT secret must be replaced. HTTPS, rate limiting, security headers, authenticated Socket.IO handshakes, a transactional database, and automated tests are also recommended.
+The deployed application uses the HTTPS Render URL. A private JWT secret must be configured for deployment. Further hardening includes rate limiting, security headers, authenticated Socket.IO handshakes, transactional storage, and broader automated integration tests.
 
 ## 11. API Testing Evidence
 
@@ -603,7 +634,7 @@ The stored screenshots demonstrate the backend running and the main request cate
 |---|---|
 | ![Update task API](<docs/screenshots/API calls/update task.jpeg>)<br>![Delete task API](<docs/screenshots/API calls/Delete task.jpeg>) | ![Messages API](<docs/screenshots/API calls/Messages API.jpeg>) |
 
-Manual testing documents are included in `docs/Documents`. The backend includes a `verify:sync` collection-count check, but the current package scripts do not define an automated backend test suite, so this report does not claim automated test coverage.
+Manual testing documents are included in `docs/Documents`. CI runs the selected frontend unit tests and backend production-serving tests listed in the pipeline table above. Additional backend test files cover message permissions and task planning, but are not selected by the current workflow. The backend also includes a `verify:sync` collection-count check. These checks do not establish complete API or live Atlas integration coverage.
 
 ### 11.1 Atlas-backed API evidence
 
@@ -721,3 +752,144 @@ This optional command connects to the configured database and prints counts for 
 NovaSync has progressed from a local frontend demonstration into a functional full-stack collaboration system. The current release connects the Kanban experience to authenticated server APIs, introduces persistent user and communication data, adds role-based administration, and enables live teamwork with Socket.IO. The before-and-after screenshots show the expansion in both interface quality and product scope, while the API evidence confirms that the frontend is supported by an operational backend.
 
 Further work includes safe storage restoration after deployment restarts, synchronization conflict handling, shared decision persistence, authenticated WebSocket connections, and broader integration testing.
+
+## 15. Screenshot Evidence Index and Previous Design Gallery
+
+The report includes every image currently supplied under `docs/screenshots`. **Final Deployment** is the final interface evidence; earlier screenshots document development history. Hosting images record deployment results, while API and database images record the corresponding manual checks.
+
+| Evidence collection | Images | Report location |
+|---|---:|---|
+| `API calls` | 9 | [API testing](#11-api-testing-evidence) |
+| `Atlas API connections` | 9 | [Atlas API evidence](#111-atlas-backed-api-evidence) |
+| `Atlas connections` | 13 | [Atlas storage evidence](#85-atlas-connection-and-storage-evidence) |
+| `final design` | 29 | Previous design gallery below |
+| `Final Deployment` | 27 | [Final Deployment gallery](#68-final-deployment-design) |
+| `host` | 3 | [Hosting evidence](#hosting-evidence) |
+| `New` | 14 | [Full-stack release](#6-full-stack-release-and-latest-design-refresh) |
+| `Old` | 11 | [Original version](#5-original-version) |
+| `Refrash` | 14 | [Intermediate refresh](#67-intermediate-design-refresh) |
+
+### Previous design milestone
+
+This complete gallery preserves the `final design` milestone for comparison with **Final Deployment**. Expand it to review the earlier dashboards, task forms, chat, administration, settings, and connection states.
+
+<details>
+<summary>View all previous design screenshots</summary>
+
+**Activity**
+
+![Previous design: Activity](<docs/screenshots/final design/Activity.png>)
+
+**Atlas connection**
+
+![Previous design: Atlas connection](<docs/screenshots/final design/Atlas connection.png>)
+
+**Atlas desconnected**
+
+![Previous design: Atlas desconnected](<docs/screenshots/final design/Atlas desconnected.png>)
+
+**Checking connection atlas**
+
+![Previous design: Checking connection atlas](<docs/screenshots/final design/Checking connection atlas.png>)
+
+**Control Center**
+
+![Previous design: Control Center](<docs/screenshots/final design/Control Center.png>)
+
+**Create account**
+
+![Previous design: Create account](<docs/screenshots/final design/Create account.png>)
+
+**Create Accounts (Admin)**
+
+![Previous design: Create Accounts (Admin)](<docs/screenshots/final design/Create Accounts (Admin).png>)
+
+**Create Task part 1**
+
+![Previous design: Create Task part 1](<docs/screenshots/final design/Create Task part 1.png>)
+
+**Create Task part 2**
+
+![Previous design: Create Task part 2](<docs/screenshots/final design/Create Task part 2.png>)
+
+**Decision log**
+
+![Previous design: Decision log](<docs/screenshots/final design/Decision log.png>)
+
+**Direct chat**
+
+![Previous design: Direct chat](<docs/screenshots/final design/Direct chat.png>)
+
+**Edit task part 1**
+
+![Previous design: Edit task part 1](<docs/screenshots/final design/Edit task part 1.png>)
+
+**Edit task part 2**
+
+![Previous design: Edit task part 2](<docs/screenshots/final design/Edit task part 2.png>)
+
+**Force mod**
+
+![Previous design: Force mod](<docs/screenshots/final design/Force mod.png>)
+
+**Invite a member**
+
+![Previous design: Invite a member](<docs/screenshots/final design/Invite a member.png>)
+
+**login**
+
+![Previous design: login](<docs/screenshots/final design/login.png>)
+
+**Message Audits (Admin)**
+
+![Previous design: Message Audits (Admin)](<docs/screenshots/final design/Message Audits (Admin).png>)
+
+**My board (Kanban)**
+
+![Previous design: My board (Kanban)](<docs/screenshots/final design/My board (Kanban).png>)
+
+**My board (Timeline)**
+
+![Previous design: My board (Timeline)](<docs/screenshots/final design/My board (Timeline).png>)
+
+**New tab icon**
+
+![Previous design: New tab icon](<docs/screenshots/final design/New tab icon.png>)
+
+**Notification (Admin)**
+
+![Previous design: Notification (Admin)](<docs/screenshots/final design/Notification (Admin).png>)
+
+**Notification (User)**
+
+![Previous design: Notification (User)](<docs/screenshots/final design/Notification (User).png>)
+
+**Overview**
+
+![Previous design: Overview](<docs/screenshots/final design/Overview.png>)
+
+**Report (Admin)**
+
+![Previous design: Report (Admin)](<docs/screenshots/final design/Report (Admin).png>)
+
+**Setting page**
+
+![Previous design: Setting page](<docs/screenshots/final design/Setting page.png>)
+
+**Task security (Admin)**
+
+![Previous design: Task security (Admin)](<docs/screenshots/final design/Task security (Admin).png>)
+
+**Team chat**
+
+![Previous design: Team chat](<docs/screenshots/final design/Team chat.png>)
+
+**Team**
+
+![Previous design: Team](<docs/screenshots/final design/Team.png>)
+
+**User dashboard**
+
+![Previous design: User dashboard](<docs/screenshots/final design/User dashboard.png>)
+
+</details>
