@@ -1,4 +1,4 @@
-# NovaSync Full-Stack Development Report
+# NovaSync
 
 [![Node CI](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)
 [![Render hosting status](https://img.shields.io/website?url=https%3A%2F%2Ffull-stack-development-n0qo.onrender.com%2F&label=Render%20hosting&up_message=online&up_color=brightgreen&down_message=unavailable&down_color=red)](https://full-stack-development-n0qo.onrender.com/)
