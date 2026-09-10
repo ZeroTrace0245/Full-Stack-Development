@@ -1,0 +1,43 @@
+name: Node CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Keep this version aligned with local development and Render.
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+
+      # Requires package.json and package-lock.json at the repository root.
+      - name: Install dependencies
+        run: npm ci
+
+      # These checks run only when the corresponding package script exists.
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Test
+        run: npm run test --if-present
