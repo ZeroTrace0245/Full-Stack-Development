@@ -1,5 +1,44 @@
 # NovaSync Full-Stack Development Report
 
+[![Node CI](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)
+[![Render hosting status](https://img.shields.io/website?url=https%3A%2F%2Ffull-stack-development-n0qo.onrender.com%2F&label=Render%20hosting&up_message=online&up_color=brightgreen&down_message=unavailable&down_color=red)](https://full-stack-development-n0qo.onrender.com/)
+
+**[Open NovaSync](https://full-stack-development-n0qo.onrender.com/)** · **[CI runs](https://github.com/ZeroTrace0245/Full-Stack-Development/actions/workflows/ci.yml)** · **[Deployment instructions](DEPLOYMENT.md)** · **[Final design gallery](#68-final-design)**
+
+The CI badge turns green when the `main` workflow passes. The hosting badge turns
+green when the homepage responds successfully; it does not verify login, messaging,
+or Atlas synchronization. Render Free can sleep between visits, so a cold start
+may temporarily show unavailable. Status badges reflect their providers' latest
+checks and may be cached. See [Shields website status behavior](https://shields.io/badges/website).
+
+![NovaSync final overview](<docs/screenshots/final design/Overview.png>)
+
+### CI/CD and hosting
+
+GitHub Actions installs both npm applications, lints the source, builds the Vite
+frontend, runs the existing frontend unit tests, checks backend JavaScript syntax,
+and tests production homepage/client-route serving while preserving API responses.
+CI does not connect to the live Atlas database.
+
+One Render Web Service serves the website, REST API, and Socket.IO at the same
+origin. Configure **Auto-Deploy → After CI Checks Pass** to deploy after successful
+GitHub checks.
+
+| Render setting | Value |
+|---|---|
+| Root Directory | Leave blank (repository root) |
+| Build Command | `npm ci --include=dev && npm ci --prefix backend --omit=dev && npm run build` |
+| Start Command | `npm start` |
+| Instance Type | Free |
+| Health Check Path | `/api/health` |
+| Environment | `NODE_ENV=production`, `NODE_VERSION=24`, `VITE_API_URL=/api`, `VITE_SOCKET_URL=/` |
+
+Keep `MONGODB_URI`, `MONGODB_DB_NAME`, and `JWT_SECRET` in the service environment.
+Check [API health](https://full-stack-development-n0qo.onrender.com/api/health) for
+`atlas.connected`. Full setup and the existing local-storage/Atlas restart risk
+are documented in [DEPLOYMENT.md](DEPLOYMENT.md). Pushing `render.yaml` does not
+automatically reconfigure an existing manually created service.
+
 > **Project type:** Task and team collaboration platform  
 > **Frontend:** React 19 and Vite  
 > **Backend:** Node.js, Express, Socket.IO, JWT, offline-first JSON storage, and MongoDB Atlas synchronization  
@@ -55,7 +94,7 @@ flowchart LR
     API --- RT
 ```
 
-The Vite frontend runs on port `54995`. The Express and Socket.IO server runs on port `5000`. During development, Vite proxies API and Socket.IO traffic to the backend.
+During local development, the Vite frontend runs on port `54995` and proxies API and Socket.IO traffic to the backend on port `5000`. In production, Express serves the built `dist` frontend and API on Render's assigned `PORT`; the browser uses the same origin for both.
 
 ## 5. Original Version
 
@@ -102,7 +141,7 @@ The legacy screenshots also record theme and report-display issues that motivate
 
 ## 6. Full-Stack Release and Latest Design Refresh
 
-The screenshots in `Old` show the original prototype. `New` records the first full-stack interface, and `Refrash` records the latest refresh (the folder spelling is retained for working links). Earlier login, dashboard, team, and administrator screenshots remain as release history and coverage of workflows without replacement screenshots. They should not be read as proof that every screen received a new design. The latest refresh is documented in section 6.7.
+The screenshots in `Old` show the original prototype. `New` records the first full-stack interface, and `Refrash` records an intermediate refresh (the folder spelling is retained for working links). The newest supplied screenshots are in `final design` and appear in section 6.8. Earlier galleries remain as development history.
 
 ### 6.1 Authentication and account security
 
@@ -166,7 +205,7 @@ Socket.IO delivers new messages without requiring a page refresh. It also suppor
 |---|---|
 | ![Earlier full-stack team chat](<docs/screenshots/New/Team chat.jpeg>) | ![Earlier full-stack direct chat](<docs/screenshots/New/Direct chat.jpeg>) |
 
-### 6.7 Latest design refresh
+### 6.7 Intermediate design refresh
 
 The refresh extends the existing user and administrator workflows:
 
@@ -239,6 +278,59 @@ The gallery below records the supplied refresh images. Screens without replaceme
 **Refreshed task board: filters, focus mode, and activity toggle**
 
 ![Refreshed task board: filters, focus mode, and activity toggle](<docs/screenshots/Refrash/Task board refrash with Filters and focus mode and a activity toggle.png>)
+
+### 6.8 Final design
+
+The final-design screenshots show the latest supplied interface: a dark wallpaper,
+translucent panels, pale-blue accents, and shared sidebar navigation. The overview
+places task totals, recent work, progress, and upcoming deadlines together.
+These are project screenshots, not live hosting-status checks.
+
+| Sign in | Create account |
+|---|---|
+| ![Final sign-in screen](<docs/screenshots/final design/login.png>) | ![Final account registration](<docs/screenshots/final design/Create account.png>) |
+
+| Workspace overview | User dashboard |
+|---|---|
+| ![Final overview](<docs/screenshots/final design/Overview.png>) | ![Final user dashboard](<docs/screenshots/final design/User dashboard.png>) |
+
+| Kanban board | Timeline |
+|---|---|
+| ![Final Kanban board](<docs/screenshots/final design/My board (Kanban).png>) | ![Final board timeline](<docs/screenshots/final design/My board (Timeline).png>) |
+
+| Create task: details | Create task: additional options |
+|---|---|
+| ![Final create-task first view](<docs/screenshots/final design/Create Task part 1.png>) | ![Final create-task second view](<docs/screenshots/final design/Create Task part 2.png>) |
+
+| Edit task: first view | Edit task: second view |
+|---|---|
+| ![Final edit-task first view](<docs/screenshots/final design/Edit task part 1.png>) | ![Final edit-task second view](<docs/screenshots/final design/Edit task part 2.png>) |
+
+| Team chat | Direct chat |
+|---|---|
+| ![Final team chat](<docs/screenshots/final design/Team chat.png>) | ![Final direct chat](<docs/screenshots/final design/Direct chat.png>) |
+
+| Decision log | Activity |
+|---|---|
+| ![Final decision log](<docs/screenshots/final design/Decision log.png>) | ![Final activity view](<docs/screenshots/final design/Activity.png>) |
+
+| Team | Settings |
+|---|---|
+| ![Final team page](<docs/screenshots/final design/Team.png>) | ![Final settings page](<docs/screenshots/final design/Setting page.png>) |
+
+| Administrator control center | Administrator reports |
+|---|---|
+| ![Final control center](<docs/screenshots/final design/Control Center.png>) | ![Final administrator reports](<docs/screenshots/final design/Report (Admin).png>) |
+
+| Account administration | Task security |
+|---|---|
+| ![Final administrator account creation](<docs/screenshots/final design/Create Accounts (Admin).png>) | ![Final task security](<docs/screenshots/final design/Task security (Admin).png>) |
+
+| Administrator notifications | User notifications |
+|---|---|
+| ![Final administrator notifications](<docs/screenshots/final design/Notification (Admin).png>) | ![Final user notifications](<docs/screenshots/final design/Notification (User).png>) |
+
+![Final administrator message audits](<docs/screenshots/final design/Message Audits (Admin).png>)
 
 ## 7. Complete Change Summary
 
@@ -574,14 +666,14 @@ This optional command connects to the configured database and prints counts for 
 - JSON persistence is intended for a prototype or single-server deployment.
 - Socket.IO connections are not independently authenticated during the handshake.
 - Some socket-only message events are not persistent; REST message routes are the authoritative saved path.
-- Automated server and client tests are not included in the current scripts.
+- CI runs frontend unit tests and production-serving tests; complete API, authentication, Socket.IO, and Atlas integration coverage remains outstanding.
 - Atlas synchronization is asynchronous and uses snapshot/collection replacement without per-record conflict resolution.
 - Decisions are browser-local; they are not part of the Atlas mirror.
 - The refreshed reports summarize current board data; they are not a historical analytics backend.
-- Production deployment and CI/CD configuration are outside the current release.
+- Render configuration and CI are included. Free hosting can sleep and discards local files on restart; the current sync logic can then overwrite Atlas with fresh local data. Use a disposable database until restoration is corrected.
 
 ## 14. Release Summary
 
 NovaSync has progressed from a local frontend demonstration into a functional full-stack collaboration system. The current release connects the Kanban experience to authenticated server APIs, introduces persistent user and communication data, adds role-based administration, and enables live teamwork with Socket.IO. The before-and-after screenshots show the expansion in both interface quality and product scope, while the API evidence confirms that the frontend is supported by an operational backend.
 
-Further work includes synchronization conflict handling, shared decision persistence, authenticated WebSocket connections, automated testing, and deployment.
+Further work includes safe storage restoration after deployment restarts, synchronization conflict handling, shared decision persistence, authenticated WebSocket connections, and broader integration testing.
