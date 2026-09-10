@@ -1,4 +1,5 @@
 export function normalizePlanning(input, existing = {}) {
+  if ('archived' in input && typeof input.archived !== 'boolean') throw new Error('Archived must be a boolean')
   const result = { ...input }
   if ('dueDate' in input && !('endDate' in input)) result.endDate = input.dueDate
   const merged = { ...existing, ...result }

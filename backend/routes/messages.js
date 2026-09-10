@@ -1,6 +1,7 @@
 import express from 'express'
 import { body, validationResult } from 'express-validator'
 import Message from '../models/Message.js'
+import { canDeleteMessage } from '../utils/messagePermissions.js'
 import { adminMiddleware, authMiddleware } from '../middleware/auth.js'
 import { isMockData as useMockData } from '../config/database.js'
 import { mockId, mockStore, persistStore } from '../db/mockStore.js'
@@ -16,5 +17,21 @@ router.get('/team/:projectId', async (req, res, next) => { try { const limit = M
 router.post('/team', validateMessage, async (req, res, next) => { try { const projectId = String(req.body.projectId || ''); if (!projectId) return res.status(400).json({ error: 'Project is required' }); let message; if (useMockData()) { message = { id: mockId(), kind: 'team', sender: req.user.userId, senderUser: safeUser(req), projectId, content: req.body.content, createdAt: new Date().toISOString() }; mockStore.messages.push(message); persistStore(); message = serializeMock(message) } else { message = await (await Message.create({ kind: 'team', sender: req.user.userId, projectId, content: req.body.content })).populate('sender', 'username') } req.app.get('io')?.emit('message:team:received', message); res.status(201).json({ message }) } catch (error) { next(error) } })
 router.get('/direct/:otherUserId', async (req, res, next) => { try { const limit = Math.min(Number(req.query.limit) || 50, 100), a = String(req.user.userId), b = String(req.params.otherUserId); if (useMockData()) return res.json({ messages: mockStore.messages.filter(message => message.kind === 'direct' && ((String(message.sender) === a && String(message.receiver) === b) || (String(message.sender) === b && String(message.receiver) === a))).slice(-limit).map(serializeMock) }); const messages = await Message.find({ kind: 'direct', $or: [{ sender: a, receiver: b }, { sender: b, receiver: a }] }).populate('sender receiver', 'username').sort({ createdAt: -1 }).limit(limit); res.json({ messages: messages.reverse() }) } catch (error) { next(error) } })
 router.post('/direct', validateMessage, async (req, res, next) => { try { const receiverId = String(req.body.receiverId || ''); if (!receiverId || receiverId === String(req.user.userId)) return res.status(400).json({ error: 'Choose another team member' }); let message; if (useMockData()) { if (!mockStore.users.some(user => user.id === receiverId)) return res.status(404).json({ error: 'Recipient not found' }); message = { id: mockId(), kind: 'direct', sender: req.user.userId, senderUser: safeUser(req), receiver: receiverId, content: req.body.content, createdAt: new Date().toISOString() }; mockStore.messages.push(message); persistStore(); message = serializeMock(message) } else { message = await (await Message.create({ kind: 'direct', sender: req.user.userId, receiver: receiverId, content: req.body.content })).populate('sender receiver', 'username') } req.app.get('sendDirectMessage')?.(receiverId, message); res.status(201).json({ message }) } catch (error) { next(error) } })
+
+router.delete('/:messageId', async (req, res, next) => {
+  try {
+    const message = useMockData() ? mockStore.messages.find(item => item.id === req.params.messageId) : await Message.findById(req.params.messageId)
+    if (!message) return res.status(404).json({ error: 'Message not found' })
+    if (!canDeleteMessage(message, req.user)) return res.status(403).json({ error: 'You can delete your own messages. Administrators can also delete team posts.' })
+    const event = { id: String(message.id || message._id) }
+    if (useMockData()) {
+      mockStore.messages.splice(mockStore.messages.indexOf(message), 1)
+      persistStore()
+    } else await message.deleteOne()
+    if (message.kind === 'team') req.app.get('io')?.emit('message:deleted', event)
+    else req.app.get('notifyMessageDeletion')?.([String(message.sender), String(message.receiver)], event)
+    res.json({ message: 'Message deleted', id: event.id })
+  } catch (error) { next(error) }
+})
 
 export default router

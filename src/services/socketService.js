@@ -40,6 +40,7 @@ class SocketService {
   }
 
   setupListeners() {
+    this.socket.on('message:deleted', data => this.emit('message:deleted', data));
     // Team message received
     this.socket.on('message:team:received', (data) => {
       this.emit('message:team:received', data);

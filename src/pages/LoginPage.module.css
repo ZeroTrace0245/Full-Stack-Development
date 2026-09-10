@@ -26,3 +26,8 @@
 @media(max-width:1100px){.marketing{padding:30px;gap:24px}.authPane{padding:30px 24px}.authCard{padding:25px}.storyContent h1{font-size:52px}.slide{padding:16px}}
 @media(max-width:800px){.authCanvas{grid-template-columns:1fr}.marketing{padding:26px 24px 0;gap:0}.storyContent,.showcase,.copyright{display:none}.authPane{padding:30px 20px 45px;min-height:calc(100svh - 65px);box-sizing:border-box}.authCard{max-width:460px}.heading h2{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.slide,.passwordRules li,.submit,.authCanvas .group input{transition:none}.authCanvas .group input[aria-invalid='true']{animation:none}}
+.authCard { animation:cardEnter 480ms cubic-bezier(.2,.7,.2,1) both; }
+.spinner { width:14px; height:14px; border:2px solid #10294640; border-top-color:#102946; border-radius:50%; animation:spin 700ms linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes cardEnter { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .authCard,.spinner { animation:none; } }

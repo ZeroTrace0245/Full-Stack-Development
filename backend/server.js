@@ -50,6 +50,11 @@ app.use('/api/notifications', notificationRoutes);
 // Socket.IO Connection Handling
 const connectedUsers = new Map(); // { userId: socketId }
 const userSockets = new Map(); // { socketId: userId }
+app.set('notifyMessageDeletion', (userIds, event) => {
+  for (const [socketId, userId] of userSockets) {
+    if (userIds.includes(String(userId))) io.to(socketId).emit('message:deleted', event);
+  }
+});
 app.set('io', io);
 app.set('sendDirectMessage', (receiverId, message) => {
   const recipientSocketId = connectedUsers.get(String(receiverId));

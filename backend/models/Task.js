@@ -5,6 +5,7 @@ const taskSchema = new mongoose.Schema({
   descriptionHtml: { type: String, default: '' },
   startDate: { type: String, default: '' }, endDate: { type: String, default: '' },
   blockedBy: { type: [String], default: [] }, blocking: { type: [String], default: [] },
+  archived: { type: Boolean, default: false },
   milestone: { type: Boolean, default: false },
   boardId: { type: String, default: 'board-1', index: true }, columnId: { type: String, required: true },
   assignee: { type: String, default: '' }, priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },

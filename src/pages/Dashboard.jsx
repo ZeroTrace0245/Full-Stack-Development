@@ -31,12 +31,6 @@ export default function Dashboard() {
   const { recent: tasks, scheduled, unscheduled } = dashboardTasks(columns)
   const firstName = user?.username?.split(/[ _-]/)[0] || 'there'
   const today = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())
-  const tilt = event => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const rect = event.currentTarget.getBoundingClientRect(), x = (event.clientX - rect.left) / rect.width - .5, y = (event.clientY - rect.top) / rect.height - .5
-    event.currentTarget.style.setProperty('--rx', `${-y * 4}deg`); event.currentTarget.style.setProperty('--ry', `${x * 5}deg`)
-  }
-  const resetTilt = event => { event.currentTarget.style.setProperty('--rx', '0deg'); event.currentTarget.style.setProperty('--ry', '0deg') }
   const mouseGlow = event => { const r = event.currentTarget.getBoundingClientRect(); event.currentTarget.style.setProperty('--mouse-x', `${event.clientX-r.left}px`); event.currentTarget.style.setProperty('--mouse-y', `${event.clientY-r.top}px`) }
   const stats = [
     {label:'Total tasks',value:total,note:'Across your board',icon:'layers',tone:'violet'},
@@ -48,7 +42,7 @@ export default function Dashboard() {
     <main className={styles.main}>
       <header className={styles.topbar}><div><p>{today}</p><h1>Good to see you, {firstName}.</h1></div><button className={styles.newTask} onClick={goToBoard}><Icon name="plus" size={18}/> New task</button></header>
       <section className={styles.hero}><div className={styles.heroGlow}/><div className={styles.heroContent}><span className={styles.eyebrow}><i/> Your project at a glance</span><h2>Turn ideas into <em>momentum.</em></h2><p>Keep your team aligned and your next steps in sight.</p></div><button onClick={goToBoard}>Open project board <Icon name="arrow" size={18}/></button></section>
-      <section className={styles.statsGrid} aria-label="Project statistics">{stats.map((stat,index)=><article className={`${styles.statCard} ${styles[stat.tone]}`} key={stat.label} onPointerMove={tilt} onPointerLeave={resetTilt} style={{'--delay':`${index*60}ms`}}><div className={styles.statIcon}><Icon name={stat.icon}/></div><span>{stat.label}</span><strong>{String(stat.value).padStart(2,'0')}</strong><small>{stat.note}</small></article>)}</section>
+      <section className={styles.statsGrid} aria-label="Project statistics">{stats.map((stat,index)=><article className={`${styles.statCard} ${styles[stat.tone]}`} key={stat.label} style={{'--delay':`${index*60}ms`}}><div className={styles.statIcon}><Icon name={stat.icon}/></div><span>{stat.label}</span><strong>{String(stat.value).padStart(2,'0')}</strong><small>{stat.note}</small></article>)}</section>
       <section className={styles.lowerGrid}>
         <article className={styles.tasksPanel}><div className={styles.panelHeader}><div><span>Live board</span><h3>Recent tasks</h3></div><button onClick={goToBoard}>View all <Icon name="arrow" size={15}/></button></div><div className={styles.taskList}>{tasks.length?tasks.map((task,index)=><button className={styles.taskRow} onClick={goToBoard} key={task.id||`${task.title}-${index}`}><span className={styles.taskCheck}><Icon name={isDone(task.columnTitle)?'check':'clock'} size={15}/></span><span className={styles.taskName}><strong>{task.title}</strong><small>{task.assignee||'Unassigned'}</small></span><span className={`${styles.status} ${isDone(task.columnTitle)?styles.statusDone:isDoing(task.columnTitle)?styles.statusDoing:styles.statusTodo}`}>{task.columnTitle}</span><Icon name="arrow" size={16}/></button>):<div className={styles.emptyState}><Icon name="layers" size={28}/><p>No tasks yet. Start by creating your first one.</p></div>}</div></article>
         <article className={styles.progressPanel}><div className={styles.panelHeader}><div><span>All board tasks</span><h3>Overall progress</h3></div></div><div className={styles.ring} style={{'--progress':percent}}><div><strong>{percent}%</strong><small>{total ? `${done} of ${total} tasks` : 'No tasks yet'}</small></div></div><div className={styles.progressLegend}><span><i className={styles.legendDone}/>{done} done</span><span><i className={styles.legendDoing}/>{doing} active</span><span><i className={styles.legendTodo}/>{todo} queued</span></div></article>

@@ -41,7 +41,7 @@ export default function Column({ column, collapsed, onToggle, onCreateTask, onDe
           +
         </button>
       </div>
-      {!collapsed && <div className={styles.tasks} ref={setNodeRef}>
+      {!collapsed && <div className={styles.tasks} data-scroll-key={column.id} ref={setNodeRef}>
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {column.tasks.map((task) => (
             <TaskCard

@@ -44,3 +44,5 @@
 .form.form .milestone input:checked { background:#487dbb; }
 .form.form .milestone input:checked::after { transform:translateX(17px); background:#fff; }
 @media(prefers-reduced-motion:reduce) { .form.form .milestone input::after { transition:none; } }
+/* Comfortable keyboard and touch targets throughout the task editor. */
+.form button,.form select,.form input:not([type=checkbox]) { min-height:44px; }

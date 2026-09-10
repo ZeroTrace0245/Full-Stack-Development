@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import DeleteMessageButton from '../components/DeleteMessageButton'
+import { useMessageDeletion } from '../utils/useMessageDeletion'
 import { useAuth } from '../context/AuthContext'
 import apiClient from '../api/client'
 import socketService from '../services/socketService'
@@ -33,12 +35,18 @@ export default function Chat() {
   const [contextMessageId, setContextMessageId] = useState(null)
   const typingTimer = useRef(null)
   const currentUserId = idOf(user)
+  const deletedIds = useRef(new Set())
+  useMessageDeletion(useCallback(id => {
+    deletedIds.current.add(id)
+    setTeamMessages(items => items.filter(item => idOf(item) !== id))
+    setDirectMessages(current => Object.fromEntries(Object.entries(current).map(([key, items]) => [key, items.filter(item => idOf(item) !== id)])))
+  }, []))
   const members = useMemo(() => allUsers.filter(member => idOf(member) !== currentUserId), [allUsers, currentUserId])
 
   useEffect(() => {
     let active = true
     Promise.all([apiClient.getAllUsers(), apiClient.getTeamMessages(PROJECT_ID)]).then(([usersResult, messagesResult]) => {
-      if (active) { setAllUsers(usersResult.users || []); setTeamMessages(messagesResult.messages || []) }
+      if (active) { setAllUsers(usersResult.users || []); setTeamMessages((messagesResult.messages || []).filter(item => !deletedIds.current.has(idOf(item)))) }
     }).catch(err => active && setError(err.error || err.message || 'Could not load messages.')).finally(() => active && setLoading(false))
     return () => { active = false }
   }, [])
@@ -46,8 +54,9 @@ export default function Chat() {
   useEffect(() => {
     if (!user) return
     socketService.connect(user.id, user.username)
-    const onTeam = message => { if (String(message.projectId) === PROJECT_ID) setTeamMessages(items => mergeMessage(items, message)) }
+    const onTeam = message => { if (deletedIds.current.has(idOf(message))) return; if (String(message.projectId) === PROJECT_ID) setTeamMessages(items => mergeMessage(items, message)) }
     const onDirect = message => {
+      if (deletedIds.current.has(idOf(message))) return
       const conversationId = senderIdOf(message) === currentUserId ? idOf(message.receiverId || message.receiver) : senderIdOf(message)
       setDirectMessages(current => ({ ...current, [conversationId]: mergeMessage(current[conversationId] || [], message) }))
     }
@@ -62,7 +71,7 @@ export default function Chat() {
     setSelectedUser(member); setError('')
     const memberId = idOf(member)
     if (directMessages[memberId]) return
-    try { const result = await apiClient.getDirectMessages(memberId); setDirectMessages(current => ({ ...current, [memberId]: result.messages || [] })) }
+    try { const result = await apiClient.getDirectMessages(memberId); setDirectMessages(current => ({ ...current, [memberId]: (result.messages || []).filter(item => !deletedIds.current.has(idOf(item))) })) }
     catch (err) { setError(err.error || err.message || 'Could not load this conversation.') }
   }
 
@@ -117,17 +126,17 @@ export default function Chat() {
           {error && <div className={styles.chatError} role="alert">{error}</div>}
           {activeMode === 'team' ? <div className={styles.teamChat}>
             <div className={styles.chatTop}><h2># Team chat</h2><p className={styles.modeInfo}>{preview ? 'Layout preview · sample messages only' : 'Visible to everyone in this workspace · mention tasks with #NS-101'}</p></div>
-            <MessageList messages={preview ? stressMessages : teamMessages} userId={currentUserId} loading={!preview && loading} typingUser={typingUser} onDecision={!preview && user?.role === 'Admin' ? saveDecision : undefined}/>
+            <MessageList messages={preview ? stressMessages : teamMessages} userId={currentUserId} loading={!preview && loading} typingUser={typingUser} allowDelete={!preview} moderate={user?.role === 'Admin'} onDecision={!preview && user?.role === 'Admin' ? saveDecision : undefined}/>
             {preview ? <div className={styles.messageForm}>Sample data preview — sending is disabled.</div> : <MessageForm value={messageContent} setValue={setMessageContent} onSubmit={send} sending={sending} placeholder="Message the whole team…" user={user}/>}
-          </div> : activeMode === 'direct' ? <section className={styles.chatArea}>{selectedUser ? <><div className={styles.chatAreaHeader}><div className={styles.headerInfo}><span className={styles.userIcon}>{selectedUser.username.charAt(0).toUpperCase()}<Presence online={onlineUsers.has(idOf(selectedUser))}/></span><h2>{selectedUser.username}</h2></div></div><MessageList messages={messages} userId={currentUserId} typingUser={typingUser}/><MessageForm value={messageContent} setValue={setMessageContent} onSubmit={send} sending={sending} placeholder={`Message ${selectedUser.username}…`} user={user}/></> : <div className={styles.emptyState}><p>Select a team member to start a private conversation.</p></div>}</section> : <DecisionLog decisions={decisions} tasks={tasks} canEdit={user?.role === 'Admin'} onUpdate={updateDecision} onTimeline={openTimeline} onContext={openContext} onRemove={id => { const next = decisions.filter(d => d.id !== id); setDecisions(next); localStorage.setItem('novasync-decisions', JSON.stringify(next)) }}/>}
+          </div> : activeMode === 'direct' ? <section className={styles.chatArea}>{selectedUser ? <><div className={styles.chatAreaHeader}><div className={styles.headerInfo}><span className={styles.userIcon}>{selectedUser.username.charAt(0).toUpperCase()}<Presence online={onlineUsers.has(idOf(selectedUser))}/></span><h2>{selectedUser.username}</h2></div></div><MessageList messages={messages} userId={currentUserId} typingUser={typingUser} allowDelete/><MessageForm value={messageContent} setValue={setMessageContent} onSubmit={send} sending={sending} placeholder={`Message ${selectedUser.username}…`} user={user}/></> : <div className={styles.emptyState}><p>Select a team member to start a private conversation.</p></div>}</section> : <DecisionLog decisions={decisions} tasks={tasks} canEdit={user?.role === 'Admin'} onUpdate={updateDecision} onTimeline={openTimeline} onContext={openContext} onRemove={id => { const next = decisions.filter(d => d.id !== id); setDecisions(next); localStorage.setItem('novasync-decisions', JSON.stringify(next)) }}/>}
         </section>
       </div>
     </main>
   </div>
 }
 
-function MessageList({ messages, userId, loading, typingUser, onDecision }) { return <div className={styles.messageListContainer}><div className={styles.messageList}>{loading ? <div className={styles.emptyState}>Loading messages…</div> : messages.length === 0 ? <div className={styles.emptyState}><p>No messages yet. Start the conversation.</p></div> : messages.map(message => <Message key={idOf(message)} message={message} own={senderIdOf(message)===userId} onDecision={onDecision}/>)}{typingUser && <div className={styles.typingIndicator}>{typingUser} is typing<span>•••</span></div>}</div></div> }
-function Message({ message, own, onDecision }) {
+function MessageList({ messages, userId, loading, typingUser, onDecision, allowDelete, moderate }) { return <div className={styles.messageListContainer}><div className={styles.messageList}>{loading ? <div className={styles.emptyState}>Loading messages…</div> : messages.length === 0 ? <div className={styles.emptyState}><p>No messages yet. Start the conversation.</p></div> : messages.map(message => <Message key={idOf(message)} message={message} own={senderIdOf(message)===userId} onDecision={onDecision} canDelete={allowDelete && (moderate || senderIdOf(message)===userId)}/>)}{typingUser && <div className={styles.typingIndicator}>{typingUser} is typing<span>•••</span></div>}</div></div> }
+function Message({ message, own, onDecision, canDelete }) {
   const [reaction, setReaction] = useState('')
   const system = message.type === 'system' || message.type === 'alert'
   return <article id={`message-${idOf(message)}`} tabIndex={-1} className={`${styles.message} ${own ? styles.ownMessage : ''} ${system ? styles.systemMessage : ''}`}>
@@ -138,7 +147,7 @@ function Message({ message, own, onDecision }) {
         {system && <span className={styles.alertLabel}>⚠ {message.severity === 'critical' ? 'Critical alert' : 'System notification'}</span>}
         <div className={styles.messageBody}>{message.content}</div>
         {message.attachments?.length > 0 && <ul className={styles.attachments}>{message.attachments.map((file, index) => <li key={file.id || index}><span aria-hidden="true">▤</span><div><strong>{file.name}</strong><small>{file.sizeLabel || 'File attachment'}</small></div>{/^https?:\/\//i.test(file.url || '') && <a href={file.url} target="_blank" rel="noreferrer" aria-label={`Open ${file.name}`}>Open ↗</a>}</li>)}</ul>}
-        <div className={styles.messageTools}><button aria-label="Acknowledge message" aria-pressed={Boolean(reaction)} onClick={() => setReaction(reaction ? '' : '✓')}>{reaction || '♡'} {reaction && '1'}</button>{onDecision && <button onClick={() => onDecision(message)}>◇ Save decision</button>}</div>
+        <div className={styles.messageTools}>{canDelete && <DeleteMessageButton message={message}/>}<button aria-label="Acknowledge message" aria-pressed={Boolean(reaction)} onClick={() => setReaction(reaction ? '' : '✓')}>{reaction || '♡'} {reaction && '1'}</button>{onDecision && <button onClick={() => onDecision(message)}>◇ Save decision</button>}</div>
       </div>
     </div>
   </article>

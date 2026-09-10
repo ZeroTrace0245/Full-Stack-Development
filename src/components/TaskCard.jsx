@@ -1,4 +1,6 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
+import { duplicateTask } from '../utils/taskTools'
+import { useBoard } from '../context/BoardContext'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { getUserInitials } from '../utils/generateUsers'
@@ -6,6 +8,16 @@ import styles from './TaskCard.module.css'
 import { useAuth } from '../context/AuthContext'
 
 export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
+  const { board, handleEditTask, handleCreateTask } = useBoard()
+  const [busy, setBusy] = useState(false), [feedback, setFeedback] = useState('')
+  const pending = useRef(false)
+  const doneColumn = board.columns.find(item=>/done|complete|deployed|production/i.test(item.title))
+  const quickAction = async action => {
+    if (pending.current) return
+    pending.current=true; setBusy(true); setFeedback('')
+    try { await action() } catch (err) { setFeedback(err.error || err.message || 'Action failed. Please try again.') }
+    finally { pending.current=false; setBusy(false) }
+  }
   const { user } = useAuth()
   const canChange = !task.assignmentLocked || user?.role === 'Admin' || String(task.assignedUserId) === String(user?.id)
   const {
@@ -66,12 +78,16 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
         </div>
       </div>
 
+      {feedback&&<p role="status">{feedback}</p>}
       {/* Compact action menu: single affordance + hover-revealed secondary actions */}
       {canChange && onEdit && onDelete && <div className={styles.actions} onKeyDown={e=>e.stopPropagation()}>
         <div className={styles.secondary}>
+          <button type="button" disabled={busy} className={styles.actionBtn} title="Duplicate task" aria-label={`Duplicate ${task.title}`} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();quickAction(()=>handleCreateTask(duplicateTask(task,board.columns[0].id)))}}>⧉+</button>
+          {doneColumn && task.columnId!==doneColumn.id && <button type="button" disabled={busy} className={styles.actionBtn} title="Mark complete" aria-label={`Complete ${task.title}`} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();quickAction(()=>handleEditTask({id:task.id,columnId:doneColumn.id}))}}>✓</button>}
+          <button type="button" disabled={busy} className={styles.actionBtn} title="Copy task details" aria-label={`Copy ${task.title}`} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();quickAction(async()=>{await navigator.clipboard.writeText([task.title,task.description,`Priority: ${task.priority}`,`Assignee: ${task.assignee||'Unassigned'}`].filter(Boolean).join('\n'));setFeedback('Copied.')})}}>⧉</button>
           <button
             className={styles.actionBtn}
-            title="Edit task"
+            disabled={busy} title="Edit task"
             aria-label={`Edit ${task.title}`}
             onPointerDown={e=>e.stopPropagation()}
             onClick={e=>{e.stopPropagation();onEdit(task,column)}}
@@ -80,7 +96,7 @@ export default function TaskCard({ task, columnId, column, onDelete, onEdit }) {
           </button>
           <button
             className={`${styles.actionBtn} ${styles.delete}`}
-            title="Delete task"
+            disabled={busy} title="Delete task"
             aria-label={`Delete ${task.title}`}
             onPointerDown={e=>e.stopPropagation()}
             onClick={e=>{e.stopPropagation();onDelete(task.id,task.title)}}

@@ -271,8 +271,8 @@
   & .progress span { color: var(--task-muted); }
   & .meta { color: var(--task-muted); flex-wrap: wrap; border-top: 1px solid #ffffff12; padding-top: 12px; }
   & .actions { align-self: flex-end; margin: 0; width: auto; }
-  & .secondary { opacity: 1; transform: none; }
-  & .actionBtn { color: var(--task-text); width: 32px; height: 32px; border: 1px solid #ffffff18; border-radius: 7px; background: #8db8fa0d; }
+  & .secondary { opacity: 1; transform: none; flex-wrap: wrap; justify-content: flex-end; }
+  & .actionBtn { color: var(--task-text); width: 44px; height: 44px; border: 1px solid #ffffff18; border-radius: 7px; background: #8db8fa0d; }
   & .actionBtn:hover { background: #8db8fa26; }
   & .actionBtn:focus-visible { outline: 2px solid #8db8fa; outline-offset: 3px; }
 }

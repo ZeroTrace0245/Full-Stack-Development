@@ -6,11 +6,14 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [transition, setTransition] = useState('boot')
+  const clearTransition = useCallback(() => setTransition(null), [])
   const [currentPage, setCurrentPage] = useState('login')
   useEffect(() => { const theme = user?.preferences?.theme || localStorage.getItem('novasync-theme') || 'dark'; document.documentElement.dataset.theme = theme; localStorage.setItem('novasync-theme', theme) }, [user])
 
   const finishLogin = useCallback((result, remember = true) => {
     apiClient.setToken(result.token, remember)
+    setTransition('login')
     setUser(result.user)
     setCurrentPage('dashboard')
   }, [])
@@ -54,6 +57,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     apiClient.clearToken()
+    setTransition('logout')
     setUser(null)
     setCurrentPage('login')
   }, [])
@@ -91,6 +95,8 @@ export function AuthProvider({ children }) {
       user,
       isLoggedIn: !!user,
       isLoading,
+      transition,
+      clearTransition,
       currentPage,
       login,
       adminLogin,
@@ -106,7 +112,7 @@ export function AuthProvider({ children }) {
       updateProfile
       ,goToAdminLogin,
       goToLogin
-  }), [user, isLoading, currentPage, login, register, logout])
+  }), [user, isLoading, transition, clearTransition, currentPage, login, adminLogin, register, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 

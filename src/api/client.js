@@ -160,6 +160,10 @@ class APIClient {
   }
 
   // ============ MESSAGE ENDPOINTS ============
+  async deleteMessage(id) {
+    try { return (await axios.delete(`${API_BASE_URL}/messages/${encodeURIComponent(id)}`, { headers: this.getHeaders() })).data; }
+    catch (error) { throw error.response?.data || error; }
+  }
   async getTeamMessages(projectId, limit = 50) {
     try {
       const response = await axios.get(`${API_BASE_URL}/messages/team/${projectId}?limit=${limit}`, {

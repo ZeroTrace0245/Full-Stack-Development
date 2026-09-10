@@ -1,14 +1,21 @@
-/* One viewport-sized wallpaper shared by every screen and glass surface.
+/* One full-page wallpaper shared by every screen and glass surface.
    Vite bundles these source images with production-safe, hashed URLs. */
 :root {
+  color-scheme: dark;
+  background: #202b32;
   --wallpaper-light-opacity: 0;
 }
 
 :root[data-theme="light"] {
+  color-scheme: light;
+  background: #eeeded;
   --wallpaper-light-opacity: 1;
 }
 
 html body {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
   isolation: isolate;
   background: #202b32;
 }
@@ -18,7 +25,9 @@ html body {
 body::before,
 body::after {
   content: "";
-  position: fixed;
+  /* Follow the document height so long pages and full-page screenshots
+     retain the wallpaper below the initial viewport. */
+  position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
@@ -28,11 +37,11 @@ body::after {
 }
 
 body::before {
-  background-image: linear-gradient(rgba(8, 11, 18, 0.12), rgba(8, 11, 18, 0.12)), url('../../docs/background/mica-dark.png');
+  background-image: linear-gradient(rgba(8, 11, 18, 0.12), rgba(8, 11, 18, 0.12)), url('../../docs/Background/mica-dark.png');
 }
 
 body::after {
-  background-image: url('../../docs/background/mica-light.png');
+  background-image: url('../../docs/Background/mica-light.png');
   opacity: var(--wallpaper-light-opacity);
   transition: opacity 450ms ease;
 }

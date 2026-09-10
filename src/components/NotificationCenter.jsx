@@ -7,6 +7,9 @@ const emptyForm = { type: 'news', title: '', message: '', meetingAt: '' }
 
 export default function NotificationCenter() {
   const { user, isLoggedIn } = useAuth()
+  const [dismissed, setDismissed] = useState(() => { try { return JSON.parse(localStorage.getItem(`dismissed-notifications-${user?.id}`)) || [] } catch { return [] } })
+  useEffect(() => { try { setDismissed(JSON.parse(localStorage.getItem(`dismissed-notifications-${user?.id}`)) || []) } catch { setDismissed([]) } }, [user?.id])
+  const dismissItems = ids => { const next = [...new Set([...dismissed, ...ids])]; setDismissed(next); try { localStorage.setItem(`dismissed-notifications-${user?.id}`, JSON.stringify(next)) } catch { /* optional preference */ } }
   const [open, setOpen] = useState(false)
   const [atlas, setAtlas] = useState({ checked: false, configured: false, connected: false })
   const [items, setItems] = useState([])
@@ -54,7 +57,8 @@ export default function NotificationCenter() {
   }, [open])
 
   if (!isLoggedIn) return null
-  const unread = items.filter(item => !(item.readBy || []).includes(String(user.id))).length
+  const visibleItems = items.filter(item => !dismissed.includes(item.id))
+  const unread = visibleItems.filter(item => !(item.readBy || []).includes(String(user.id))).length
   const atlasLabel = checking || !atlas.checked ? 'Checking Atlas' : atlas.connected ? 'Atlas connected' : atlas.configured ? 'Atlas disconnected' : 'Local only'
   const connectionStyle = checking || !atlas.checked ? styles.syncing : atlas.connected ? styles.online : atlas.configured ? styles.offline : styles.syncing
 
@@ -62,7 +66,7 @@ export default function NotificationCenter() {
     const next = !open
     setOpen(next)
     if (!next) return
-    const unreadItems = items.filter(item => !(item.readBy || []).includes(String(user.id)))
+    const unreadItems = visibleItems.filter(item => !(item.readBy || []).includes(String(user.id)))
     setItems(current => current.map(item => ({ ...item, readBy: [...new Set([...(item.readBy || []), String(user.id)])] })))
     await Promise.allSettled(unreadItems.map(item => apiClient.markNotificationRead(item.id)))
   }
@@ -93,6 +97,7 @@ export default function NotificationCenter() {
     {open && <section id="notification-popover" className={styles.panel} aria-label="Notification center">
       <div className={styles.panelBody}>
       <header><div><small>Workspace</small><h2>Notifications</h2></div><button onClick={() => { setOpen(false); bellRef.current?.focus() }} aria-label="Close notifications">×</button></header>
+      <div className={styles.notificationActions}><button onClick={() => dismissItems(visibleItems.filter(item => (item.readBy || []).includes(String(user.id))).map(item => item.id))}>Clear read</button><button disabled={!dismissed.length} onClick={() => { setDismissed([]); try { localStorage.removeItem(`dismissed-notifications-${user?.id}`) } catch { /* optional preference */ } }}>Show dismissed</button></div>
       {user.role === 'Admin' && <form className={styles.composer} onSubmit={post}>
         <div><select aria-label="Announcement type" value={form.type} onChange={e => setForm(v => ({ ...v, type: e.target.value }))}><option value="news">News</option><option value="meeting">Meeting</option><option value="important">Important</option></select><input aria-label="Announcement title" required maxLength="120" placeholder="Announcement title" value={form.title} onChange={e => setForm(v => ({ ...v, title: e.target.value }))}/></div>
         <textarea aria-label="Announcement message" required maxLength="1000" placeholder="Share an update with the team…" value={form.message} onChange={e => setForm(v => ({ ...v, message: e.target.value }))}/>
@@ -101,10 +106,11 @@ export default function NotificationCenter() {
       </form>}
       {error && <p className={styles.error} role="alert">{error}</p>}
       {feedError && <p className={styles.error} role="status">Unable to refresh notifications. Retrying automatically.</p>}
-      <div className={styles.feed}>{items.length === 0 ? <div className={styles.empty}><span aria-hidden="true">{feedError ? '!' : checking ? '…' : '✓'}</span><h3>{feedError ? 'Updates unavailable' : checking ? 'Checking for updates…' : "You're all caught up!"}</h3><p>{feedError ? 'Your notifications will appear when the connection returns.' : 'Admin alerts and team meetings will appear here.'}</p></div> : items.map(item => <article key={item.id}>
+      <div className={styles.feed}>{visibleItems.length === 0 ? <div className={styles.empty}><span aria-hidden="true">{feedError ? '!' : checking ? '…' : '✓'}</span><h3>{feedError ? 'Updates unavailable' : checking ? 'Checking for updates…' : "You're all caught up!"}</h3><p>{feedError ? 'Your notifications will appear when the connection returns.' : 'Admin alerts and team meetings will appear here.'}</p></div> : visibleItems.map(item => <article key={item.id}>
         <span className={`${styles.kind} ${styles[item.type] || ''}`}>{({ assignment: 'Task', important: 'Admin alert', meeting: 'Team meeting', news: 'News' })[item.type] || 'Update'}</span>
         <div><h3>{item.title}</h3><p>{item.message}</p>{item.meetingAt && <time>Meeting: {new Date(item.meetingAt).toLocaleString()}</time>}<small>{item.createdByName || 'NovaSync'} • {new Date(item.createdAt).toLocaleString()}</small></div>
-        {user.role === 'Admin' && <button className={styles.delete} onClick={() => remove(item.id)} aria-label={`Delete ${item.title}`}>×</button>}
+        <button className={styles.delete} onClick={() => dismissItems([item.id])} aria-label={`Dismiss ${item.title}`}>×</button>
+        {user.role === 'Admin' && <button onClick={() => remove(item.id)} aria-label={`Delete ${item.title} for everyone`}>Delete for everyone</button>}
       </article>)}</div>
       </div>
     </section>}

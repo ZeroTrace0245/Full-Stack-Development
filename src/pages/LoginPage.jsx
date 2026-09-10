@@ -45,7 +45,7 @@ export default function LoginPage({ initialEnvironment = 'member' }) {
           {mode === 'register' && <ul id="password-rules" className={styles.passwordRules}><li className={lengthMet ? styles.met : ''}><span aria-hidden="true">{lengthMet ? '✓' : '○'}</span>At least 8 characters<span className={styles.srOnly}>{lengthMet ? ' — met' : ' — not met'}</span></li><li className={specialMet ? styles.met : ''}><span aria-hidden="true">{specialMet ? '✓' : '○'}</span>One special character<span className={styles.srOnly}>{specialMet ? ' — met' : ' — not met'}</span></li></ul>}
         </div>
         {mode === 'login' && <><label className={styles.remember}><input type="checkbox" checked={form.remember} onChange={event => update('remember', event.target.checked)}/>Keep me signed in</label><label className={styles.environment}>Sign in as<select value={environment} onChange={event => changeEnvironment(event.target.value)}><option value="member">Workspace member</option><option value="admin">Administrator</option>{import.meta.env.DEV && <option value="demo">Development member · demo</option>}</select></label></>}
-        <button className={styles.submit} disabled={busy}>{busy ? 'Please wait…' : mode === 'register' ? 'Create my account' : 'Sign In'}<span aria-hidden="true">→</span></button>
+        <button className={styles.submit} disabled={busy} aria-busy={busy}>{busy ? 'Please wait…' : mode === 'register' ? 'Create my account' : 'Sign In'}<span aria-hidden="true" className={busy ? styles.spinner : undefined}>{busy ? '' : '→'}</span></button>
       </fieldset></form>
       <p className={styles.secure}>◇ {environment === 'admin' ? 'Administrator access requires an assigned admin role.' : 'Your next step starts here.'}</p>
     </div></section>
