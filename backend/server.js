@@ -177,7 +177,7 @@ const PORT = process.env.PORT || 5000;
 
 function startServer() {
   // Local-first routes should be available immediately; Atlas connects in the background.
-  httpServer.listen(PORT, () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 NovaSync Backend Server running on port ${PORT}`);
     console.log(`📡 Socket.IO listening for real-time events`);
     console.log(`🌐 CORS origin: ${process.env.SOCKET_IO_CORS || 'http://localhost:5173'}\n`);

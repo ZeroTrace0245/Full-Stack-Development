@@ -28,16 +28,39 @@ jobs:
           node-version: "24"
           cache: npm
 
-      # Requires package.json and package-lock.json at the repository root.
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
 
       # These checks run only when the corresponding package script exists.
       - name: Lint
-        run: npm run lint --if-present
+        run: npm run lint
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
       - name: Test
-        run: npm run test --if-present
+        run: node --test src/pages/dashboardData.test.js src/utils/moveBoardTask.test.js src/utils/taskTools.test.js
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      # Syntax checks do not connect to Atlas or modify application data.
+      - name: Check backend JavaScript
+        run: find . -path './node_modules' -prune -o -name '*.js' -print0 | xargs -0 -r -n 1 node --check
